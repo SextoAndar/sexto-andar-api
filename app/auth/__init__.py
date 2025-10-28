@@ -2,8 +2,16 @@
 """
 Módulo de autenticação - delegado 100% para sexto-andar-auth.
 
-Este módulo apenas contém dependências para extrair user_id do token validado
-remotamente. Toda lógica de JWT, hash de senha, etc é gerenciada pelo serviço
-remoto.
+Este módulo é mantido apenas por consistência organizacional.
+Toda lógica de autenticação (JWT, senhas, tokens, accounts) é gerenciada 
+pelo serviço remoto sexto-andar-auth.
+
+Endpoints de autenticação:
+- POST /api/v1/auth/register
+- POST /api/v1/auth/login
+- POST /api/v1/auth/logout
+- GET /api/v1/auth/me
+- POST /api/v1/auth/introspect (para validação de tokens)
+
+Use AUTH_SERVICE_URL para se comunicar com o serviço.
 """
-from .dependencies import *

@@ -17,7 +17,6 @@ class Settings:
     # Valores base (padrão)
     _API_BASE_PATH: str = "/api"
     _API_VERSION: str = "v1"
-    _ADMIN_ROUTE: str = "/admin"
     _ALLOW_ORIGINS: List[str] = ["*"]
     _DEBUG: bool = False
     
@@ -26,12 +25,6 @@ class Settings:
         # API
         self.API_BASE_PATH: str = os.getenv("API_BASE_PATH", self._API_BASE_PATH)
         self.API_VERSION: str = os.getenv("API_VERSION", self._API_VERSION)
-        
-    # Rotas
-    # NOTE: AUTH_ROUTE was removed because authentication is fully delegated
-    # to the external `sexto-andar-auth` service. Keep ADMIN_ROUTE for any
-    # admin-related endpoints if this repo exposes them.
-    self.ADMIN_ROUTE: str = os.getenv("ADMIN_ROUTE", self._ADMIN_ROUTE)
         
         # CORS - parse comma-separated string ou use default
         origins_str = os.getenv("ALLOW_ORIGINS", "*")

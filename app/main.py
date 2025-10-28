@@ -73,47 +73,51 @@ async def lifespan(app: FastAPI):
 # Create FastAPI application with professional documentation
 app = FastAPI(
     title="Real Estate Management API",
-    description="""A professional FastAPI-based system for managing real estate properties, user accounts, visits, and proposals.
+    description="""A professional FastAPI-based system for managing real estate properties, visits, and proposals.
+
+⚠️ **AUTHENTICATION DELEGATED**: This API delegates 100% of authentication to the external `sexto-andar-auth` service.
+All account management, registration, and login are handled by that service.
 
 ## Authentication
-This API uses JWT tokens with HTTP-only cookies for secure authentication:
-- Registration: Create USER or PROPERTY_OWNER accounts
-- Login: Authenticate and receive JWT token in cookie
-- Logout: Clear authentication cookie
-- Role-based access control for different user types
+This API validates JWT tokens by calling the external `sexto-andar-auth` service:
+- All endpoints requiring auth send tokens to `AUTH_SERVICE_URL/api/v1/auth/introspect`
+- User registration & login: Use `sexto-andar-auth` service endpoints
+- Token validation: Automatic via dependency injection
+- Role-based access control: Managed by `sexto-andar-auth`
 
-## User Roles
+## User Roles (managed by sexto-andar-auth)
 - USER: Browse properties, schedule visits, make proposals
 - PROPERTY_OWNER: Manage properties and view proposals  
 - ADMIN: Full system access and user management
 
 ## Security Features
-- JWT tokens with secure HTTP-only cookies
-- Bcrypt password hashing
+- JWT token validation via remote service
 - Role-based access control
 - CORS protection
 - Input validation with Pydantic
 
 ## Core Features
-- Account management and authentication
 - Property listing CRUD operations
 - Visit scheduling system
 - Proposal management
-- Admin user management panel
 
 ## Technical Stack
 - Framework: FastAPI with async/await support
 - Database: PostgreSQL with SQLAlchemy ORM
-- Authentication: JWT with HTTP-only cookies
+- Authentication: Remote JWT validation via `sexto-andar-auth`
 - Validation: Pydantic models
 - Documentation: Auto-generated OpenAPI/Swagger
 
 ## Getting Started
-1. Run database migrations: python scripts/migrate_database.py
-2. Most endpoints require authentication
-3. Register account using /api/v1/auth/register endpoints
-4. Login using /api/v1/auth/login
-5. Admin users must be created via command-line script
+1. Start both services: `sexto-andar-auth` and this API
+2. Set `AUTH_SERVICE_URL` environment variable pointing to auth service
+3. All endpoints requiring auth will validate tokens with the auth service
+4. Register accounts and login via `sexto-andar-auth` service
+
+## Related Services
+- **sexto-andar-auth**: https://github.com/moonshinerd/sexto-andar-auth
+  - Handles: Account registration, login, JWT tokens, user management
+  - Database: Shared PostgreSQL with this API
 
 ## API Versioning
 - Current Version: v1
