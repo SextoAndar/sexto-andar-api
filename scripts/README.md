@@ -1,80 +1,63 @@
 # Scripts
 
-Esta pasta contém scripts utilitários para o projeto Real Estate Management API.
+This folder contains utility scripts for the Real Estate Management API project.
 
 ## migrate_database.py
 
-Script para migração e inicialização do banco de dados.
+Script for database migration and initialization.
 
-### Uso:
+### Usage:
 
 ```bash
-# Executar migrações (interativo)
+# Run migrations (interactive)
 python scripts/migrate_database.py
 
-# Executar migrações forçadas (sem confirmação)
+# Force run migrations (without confirmation)
 python scripts/migrate_database.py --force
 
-# Apenas verificar status do banco
+# Check database status only
 python scripts/migrate_database.py --check
 ```
 
-### Quando usar:
-- **Primeira instalação**: Execute antes de iniciar a aplicação pela primeira vez
-- **Após mudanças no modelo**: Execute sempre que modificar os modelos do banco
-- **Problemas de sincronização**: Execute quando o banco estiver desatualizado
+### When to use:
+- **First installation**: Run before starting the application for the first time
+- **After model changes**: Run whenever you modify database models
+- **Synchronization issues**: Run when database is out of sync
 
-### O que o script faz:
-1. Valida os modelos SQLAlchemy
-2. Aplica migrações necessárias
-3. Cria/atualiza tabelas
-4. Verifica conectividade do banco
+### What the script does:
+1. Validates SQLAlchemy models
+2. Applies necessary migrations
+3. Creates/updates tables
+4. Checks database connectivity
 
-## create_admin.py
+## Recommended execution order:
 
-Script para criar usuários administradores.
-
-### Uso:
-
-```bash
-# Criar um usuário admin
-python scripts/create_admin.py
-```
-
-### Quando usar:
-- Para criar o primeiro usuário administrador
-- Para criar novos administradores do sistema
-
-## Ordem de execução recomendada:
-
-1. **Uso normal (automático):**
+1. **Normal usage (automatic):**
    ```bash
-   # Migração automática no Docker Compose
+   # Automatic migration in Docker Compose
    docker-compose up --build -d
-   
-   # Criar admin se necessário
-   python scripts/create_admin.py
    ```
 
-2. **Primeira instalação (controle manual):**
+2. **First installation (manual control):**
    ```bash
-   # 1. Subir o banco com Docker
+   # 1. Start the database with Docker
    docker-compose up -d postgres
    
-   # 2. Executar migrações manualmente
+   # 2. Run migrations manually
    python scripts/migrate_database.py
    
-   # 3. Criar admin (opcional)
-   python scripts/create_admin.py
-   
-   # 4. Iniciar a aplicação
+   # 3. Start the application
    docker-compose up -d api
    ```
 
-## Notas importantes:
+## Important notes:
 
-- ✅ **Migração automática**: Docker Compose executa `migrate_database.py` automaticamente
-- ✅ **Sem intervenção manual**: `docker-compose up` cuida de tudo
-- ✅ **Scripts disponíveis**: Para casos especiais e debugging
-- ✅ **Ordem garantida**: API só inicia após migração bem-sucedida
-- ⚠️ **Use `--build`**: Para aplicar mudanças no código após modificações
+- ✅ **Automatic migration**: Docker Compose runs `migrate_database.py` automatically
+- ✅ **No manual intervention**: `docker-compose up` handles everything
+- ✅ **Scripts available**: For special cases and debugging
+- ✅ **Order guaranteed**: API only starts after successful migration
+- ⚠️ **Use `--build`**: To apply code changes after modifications
+
+---
+
+**Note**: Authentication-related scripts (like `create_admin.py`) have been removed as all authentication is now delegated to the `sexto-andar-auth` service.

@@ -1,8 +1,8 @@
 """
 Centralized model imports
 
-NOTA: Account model é gerenciado pelo serviço sexto-andar-auth no mesmo banco.
-Este repositório apenas referencia user_id, não o modelo Account.
+NOTE: Account model is managed by the sexto-andar-auth service in the same database.
+This repository only references user_id, not the Account model.
 """
 
 from app.database.connection import BaseModel

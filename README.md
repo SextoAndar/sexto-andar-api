@@ -1,244 +1,264 @@
 # Real Estate Management API
 
-Uma API FastAPI profissional para gerenciamento de imóveis, contas de usuário, visitas e propostas.
+A professional FastAPI for managing properties, visits, and proposals with **100% delegated authentication**.
 
-## 🚀 Início Rápido
+> **Important**: This repository focuses on the real estate domain. All authentication, account management, and user administration is handled by the external [`sexto-andar-auth`](https://github.com/moonshinerd/sexto-andar-auth) service.
 
-### Pré-requisitos
-- Docker e Docker Compose
+### Prerequisites
+- Docker and Docker Compose
 - Python 3.8+
 
-### 1. Clone e configure o ambiente
+### 1. Clone and setup environment
 
 ```bash
-git clone <seu-repositorio>
+git clone <your-repository>
 cd sexto-andar-api
 
-# Crie e ative um ambiente virtual (opcional mas recomendado)
+# Create and activate a virtual environment (optional but recommended)
 python -m venv venv
 source venv/bin/activate  # Linux/Mac
-# ou venv\Scripts\activate  # Windows
+# or venv\Scripts\activate  # Windows
 ```
 
-### 2. Início simplificado (com migração automática)
+### 2. Simple start (with automatic migration)
 
 ```bash
-# Subir tudo de uma vez - migração automática incluída!
+# Start everything at once - automatic migration included!
 docker-compose up --build -d
 ```
 
-A migração será executada automaticamente antes da API iniciar.
+Migration will run automatically before the API starts.
 
-### 2.1. Primeira instalação (alternativa manual)
+### 2.1. First installation (alternative manual)
 
-Se preferir controle manual sobre as migrações:
+If you prefer manual control over migrations:
 
 ```bash
-# 1. Subir banco de dados
+# 1. Start database
 docker-compose up -d postgres
 
-# 2. Executar migrações (manual)
+# 2. Run migrations (manual)
 python scripts/migrate_database.py
 
-# 3. Subir toda aplicação
+# 3. Start entire application
 docker-compose up -d
 ```
 
-### 3. Desenvolvimento contínuo
+### 3. Continuous development
 
-Para desenvolvimento normal, apenas execute:
+For normal development, simply execute:
 ```bash
 docker-compose up
 ```
 
-## 📖 Documentação da API
+## 📖 API Documentation
 
-Após iniciar a aplicação, acesse:
+After starting the application, access:
 - **Swagger UI**: http://localhost:8000/docs
 - **ReDoc**: http://localhost:8000/redoc
 - **Health Check**: http://localhost:8000/health
 
-## 🗄️ Gerenciamento do Banco de Dados
+## 🗄️ Database Management
 
-### Migração Automática
+### Automatic Migration
 
-O Docker Compose agora executa migrações automaticamente:
-- ✅ **Automático**: `docker-compose up` executa migração antes da API
-- ✅ **Seguro**: Migração só executa se o banco estiver healthy
-- ✅ **Limpo**: Container de migração para depois que completa
-- ✅ **Confiável**: API só inicia após migração bem-sucedida
+Docker Compose now executes migrations automatically:
+- ✅ **Automatic**: `docker-compose up` runs migration before API
+- ✅ **Safe**: Migration only executes if database is healthy
+- ✅ **Clean**: Migration container stops after completion
+- ✅ **Reliable**: API only starts after successful migration
 
-### Script de Migração
+### Migration Script
 
-O script `scripts/migrate_database.py` é responsável por:
-- Validar modelos do banco
-- Aplicar migrações necessárias
-- Criar/atualizar tabelas
-- Verificar conectividade
+The `scripts/migrate_database.py` script is responsible for:
+- Validating database models
+- Applying necessary migrations
+- Creating/updating tables
+- Checking connectivity
 
-#### Comandos do script:
+#### Script commands:
 
 ```bash
-# Executar migrações (interativo)
+# Run migrations (interactive)
 python scripts/migrate_database.py
 
-# Executar migrações forçadas
+# Force run migrations
 python scripts/migrate_database.py --force
 
-# Apenas verificar status
+# Check status only
 python scripts/migrate_database.py --check
 ```
 
-### Quando executar migrações manualmente:
+### When to run migrations manually:
 
-- ✅ **Desenvolvimento local** - Para debugar problemas de migração
-- ✅ **Problemas específicos** - Se a migração automática falhar
-- ✅ **Verificação** - Para conferir status antes de deployar
+- ✅ **Local development** - To debug migration issues
+- ✅ **Specific problems** - If automatic migration fails
+- ✅ **Verification** - To check status before deployment
 
-## 🏗️ Arquitetura
+## 🏗️ Architecture
 
-### Stack Tecnológico
-- **Framework**: FastAPI com async/await
-- **Banco de dados**: PostgreSQL com SQLAlchemy ORM
-- **Autenticação**: JWT com HTTP-only cookies
-- **Validação**: Pydantic models
-- **Containerização**: Docker Compose
+### Technology Stack
+- **Framework**: FastAPI with async/await
+- **Database**: PostgreSQL with SQLAlchemy ORM
+- **Authentication**: JWT with HTTP-only cookies
+- **Validation**: Pydantic models
+- **Containerization**: Docker Compose
 
-### Estrutura do Projeto
+### Project Structure
 
 ```
 app/
-├── controllers/          # Endpoints da API
-├── services/            # Lógica de negócio  
-├── repositories/        # Acesso a dados
-├── models/             # Modelos SQLAlchemy
-├── dtos/               # Data Transfer Objects
-├── database/           # Configuração do banco
-└── main.py            # Aplicação principal
+├── database/          # Database configuration
+├── models/            # SQLAlchemy models
+│   ├── base.py       # Base model class
+│   ├── property.py   # Property model
+│   ├── visit.py      # Visit model
+│   ├── proposal.py   # Proposal model
+│   └── address.py    # Address model
+├── main.py           # Main FastAPI application
+└── settings.py       # Configuration management
 
-scripts/                 # Scripts utilitários
-├── migrate_database.py  # Migração do banco
-├── create_admin.py     # Criação de admin
-└── README.md          # Documentação dos scripts
+scripts/               # Utility scripts
+├── migrate_database.py  # Database migration
+└── README.md          # Script documentation
 ```
 
-## 🔐 Autenticação
+## 🔐 Authentication
 
-A API utiliza JWT tokens com cookies HTTP-only seguros:
+**NOTE**: This repository delegates 100% of authentication to the external `sexto-andar-auth` service.
 
-### Tipos de Usuário
-- **USER**: Navegar imóveis, agendar visitas, fazer propostas
-- **PROPERTY_OWNER**: Gerenciar imóveis próprios e visualizar propostas
-- **ADMIN**: Acesso completo ao sistema
+### User Types (managed by sexto-andar-auth)
+- **USER**: Browse properties, schedule visits, make proposals
+- **PROPERTY_OWNER**: Manage own properties and view proposals
+- **ADMIN**: Full system access
 
-### Endpoints Principais
-- `POST /api/v1/auth/register/user` - Registro de usuário
-- `POST /api/v1/auth/register/property-owner` - Registro de proprietário
+### Authentication Endpoints
+For authentication operations, use the `sexto-andar-auth` service:
+- `POST /api/v1/auth/register/user` - User registration
+- `POST /api/v1/auth/register/property-owner` - Property owner registration
 - `POST /api/v1/auth/login` - Login
 - `POST /api/v1/auth/logout` - Logout
 
-## 🛠️ Desenvolvimento
+**Service**: https://github.com/moonshinerd/sexto-andar-auth
 
-### Executar em modo desenvolvimento
+## 🛠️ Development
+
+### Run in development mode
 
 ```bash
-# Com Docker
+# With Docker
 docker-compose up
 
-# Ou diretamente com Python (após migração)
+# Or directly with Python (after migration)
 python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### Após mudanças no modelo
+### After model changes
 
 ```bash
-# Simples: pare e suba novamente (migração automática)
+# Simple: stop and restart (automatic migration)
 docker-compose down
 docker-compose up --build -d
 
-# Ou, para controle manual:
+# Or, for manual control:
 docker-compose down
 python scripts/migrate_database.py
 docker-compose up -d
 ```
 
-## 🔧 Configuração
+## 🔧 Configuration
 
-### Variáveis de Ambiente
+### Environment Variables
 
 ```bash
+# Authentication service (REQUIRED)
+AUTH_SERVICE_URL=http://localhost:8001
+
+# API configuration
+API_BASE_PATH=/api
+API_VERSION=v1
+
+# CORS
+ALLOW_ORIGINS=*
+
+# Database (optional - uses default if not set)
 DATABASE_URL=postgresql://user:pass@localhost:5432/db
-JWT_SECRET_KEY=your-secret-key
-JWT_ALGORITHM=HS256
-JWT_EXPIRE_MINUTES=1440
+
+# Debug
+DEBUG=false
 ```
 
-### Configuração do pgAdmin
+### pgAdmin Configuration
 
 - **URL**: http://localhost:8080
 - **Login Email**: admin@admin.com
 - **Login Password**: admin
 
-Para conectar ao PostgreSQL no pgAdmin:
+To connect to PostgreSQL in pgAdmin:
 - **Host**: postgres
 - **Port**: 5432
 - **Database**: sexto_andar_db
 - **Username**: sexto_andar_user
 - **Password**: sexto_andar_pass
 
-## 📊 Monitoramento
+## 📊 Monitoring
 
 ### Health Checks
-- `GET /` - Status básico da API
-- `GET /health` - Status detalhado (API + banco)
+- `GET /` - Basic API status
+- `GET /health` - Detailed status (API + database)
 
 ### Logs
-Os logs são configurados para stdout e incluem:
-- Requests HTTP
-- Erros de aplicação
-- Status de migração
-- Conectividade do banco
+Logs are configured to stdout and include:
+- HTTP requests
+- Application errors
+- Migration status
+- Database connectivity
 
 ## 🐳 Docker
 
-### Serviços disponíveis:
-- **migrate**: Executa migrações automaticamente (roda uma vez e para)
-- **api**: Aplicação FastAPI (porta 8000) - depende da migração
-- **postgres**: PostgreSQL 15 (porta 5432)
-- **pgadmin**: Interface web do PostgreSQL (porta 8080)
+### Available services:
+- **migrate**: Runs migrations automatically (runs once then stops)
+- **api**: FastAPI application (port 8000) - depends on migration
+- **postgres**: PostgreSQL 15 (port 5432)
+- **pgadmin**: PostgreSQL web interface (port 8080)
 
-### Comandos úteis:
+### Useful commands:
 
 ```bash
-# Parar todos os serviços
+# Stop all services
 docker-compose down
 
-# Ver logs de um serviço
+# View logs of a service
 docker-compose logs api
 
-# Reconstruir imagens
+# Rebuild images
 docker-compose build
 
-# Executar apenas o banco
+# Run only the database
 docker-compose up -d postgres
 ```
 
-## ⚠️ Importante
+## ⚠️ Important Notes
 
-1. **Migração automática**: `docker-compose up` cuida das migrações automaticamente
-2. **Dependências corretas**: API só inicia após migração bem-sucedida
-3. **Rebuilds**: Use `--build` após mudanças no código para recriar containers
-4. **Admin users**: Crie usando `python scripts/create_admin.py` após subir os serviços
+1. **Automatic migration**: `docker-compose up` handles migrations automatically
+2. **Correct dependencies**: API only starts after successful migration
+3. **Rebuilds**: Use `--build` after code changes to recreate containers
+4. **Authentication**: All user authentication is handled by the `sexto-andar-auth` service
 
-## 🤝 Contribuindo
+## 🤝 Contributing
 
-1. Execute as migrações após fazer checkout
-2. Teste suas mudanças localmente
-3. Execute as migrações após mudanças no modelo
-4. Documente novos endpoints na documentação OpenAPI
+1. Run migrations after checking out
+2. Test your changes locally
+3. Run migrations after model changes
+4. Document new endpoints in OpenAPI documentation
 
-## 📞 Suporte
+## 📞 Support
 
-- **Documentação**: http://localhost:8000/docs
-- **Issues**: Abra uma issue no repositório
+- **Documentation**: http://localhost:8000/docs
+- **Issues**: Open an issue on the repository
 - **Health Check**: http://localhost:8000/health
+
+---
+
+**Note**: This repository focuses on real estate domain (Properties, Visits, Proposals). 
+All authentication and account management is delegated to the `sexto-andar-auth` service.
