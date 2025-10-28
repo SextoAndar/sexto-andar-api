@@ -104,24 +104,7 @@ python scripts/migrate_database.py --check
 - **Containerization**: Docker Compose
 - **Authentication**: Delegated to `sexto-andar-auth` service
 
-### Project Structure
 
-```
-app/
-├── database/          # Database configuration
-├── models/            # SQLAlchemy models
-│   ├── base.py       # Base model class
-│   ├── property.py   # Property model
-│   ├── visit.py      # Visit model
-│   ├── proposal.py   # Proposal model
-│   └── address.py    # Address model
-├── main.py           # Main FastAPI application
-└── settings.py       # Configuration management
-
-scripts/               # Utility scripts
-├── migrate_database.py  # Database migration
-└── README.md          # Script documentation
-```
 
 ## ️ Development
 
