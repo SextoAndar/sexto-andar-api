@@ -7,7 +7,8 @@ from app.services.auth_service import AuthService
 from app.dtos.auth_dto import LoginRequest, LoginResponse, RegisterUserRequest, RegisterPropertyOwnerRequest, AuthUser
 from app.auth.jwt_handler import get_token_expiry
 
-router = APIRouter(prefix="/auth", tags=["authentication"])
+# Prefix é definido no main.py via settings
+router = APIRouter(tags=["authentication"])
 
 @router.post("/login", response_model=LoginResponse, summary="User Login")
 async def login(

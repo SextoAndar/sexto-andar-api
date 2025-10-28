@@ -9,7 +9,8 @@ from app.dtos.account_dto import AccountListResponse, AccountResponse, UpdateAcc
 from app.auth.dependencies import get_current_admin_user
 from app.models.account import Account
 
-router = APIRouter(prefix="/admin", tags=["admin"])
+# Prefix é definido no main.py via settings
+router = APIRouter(tags=["admin"])
 
 @router.get("/users", response_model=AccountListResponse)
 async def get_all_users(

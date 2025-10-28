@@ -2,17 +2,26 @@
 from fastapi import Depends, HTTPException, status, Cookie
 from typing import Optional, Annotated
 from sqlalchemy.orm import Session
+import logging
 
 from app.database.connection import get_db
 from app.models.account import Account, RoleEnum
 from app.auth.jwt_handler import verify_token
+from app.clients.auth_client import get_auth_client
+from app.settings import settings
+
+logger = logging.getLogger(__name__)
 
 async def get_current_user(
     access_token: Annotated[Optional[str], Cookie()] = None,
     db: Session = Depends(get_db)
 ) -> Account:
     """
-    Get current authenticated user from JWT cookie
+    Get current authenticated user from JWT cookie.
+    
+    Valida o token de duas formas:
+    1. Se AUTH_SERVICE_URL está configurado, valida remotamente
+    2. Caso contrário, valida localmente
     
     Args:
         access_token: JWT token from cookie
@@ -33,19 +42,46 @@ async def get_current_user(
     if not access_token:
         raise credentials_exception
     
-    # Verify token
-    payload = verify_token(access_token)
-    if not payload:
-        raise credentials_exception
+    # Tentar validar remotamente se configurado
+    auth_client = get_auth_client()
+    if auth_client:
+        logger.info("Validando token remotamente via serviço de auth")
+        try:
+            result = await auth_client.introspect_token(access_token)
+            
+            if not result.get("active"):
+                reason = result.get("reason", "unknown")
+                logger.warning(f"Token inválido: {reason}")
+                raise credentials_exception
+            
+            # Token válido, extrair user_id
+            claims = result.get("claims", {})
+            user_id = claims.get("sub")
+            
+            if not user_id:
+                logger.warning("Token válido mas sem user_id")
+                raise credentials_exception
+                
+        except Exception as e:
+            logger.error(f"Erro ao validar token remotamente: {e}")
+            raise credentials_exception
+    else:
+        # Validação local (fallback)
+        logger.info("Validando token localmente (sem serviço remoto)")
+        payload = verify_token(access_token)
+        
+        if not payload:
+            raise credentials_exception
+        
+        user_id = payload.get("sub")
+        
+        if not user_id:
+            raise credentials_exception
     
-    # Get user ID from token
-    user_id: str = payload.get("sub")
-    if not user_id:
-        raise credentials_exception
-    
-    # Get user from database
+    # Buscar usuário no banco de dados
     user = db.query(Account).filter(Account.id == user_id).first()
     if not user:
+        logger.warning(f"Usuário {user_id} não encontrado no banco")
         raise credentials_exception
     
     return user

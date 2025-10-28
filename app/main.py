@@ -8,6 +8,7 @@ import sys
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from app.settings import settings
 
 # Import database functions
 from app.database.connection import (
@@ -140,10 +141,10 @@ This API uses JWT tokens with HTTP-only cookies for secure authentication:
     lifespan=lifespan
 )
 
-# CORS middleware (adjust for your needs)
+# CORS middleware (read from settings / .env)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify your frontend URLs
+    allow_origins=settings.ALLOW_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -192,9 +193,15 @@ async def health_check():
 # app.include_router(visits.router, prefix="/api/v1/visits", tags=["Visits"])
 # app.include_router(proposals.router, prefix="/api/v1/proposals", tags=["Proposals"])
 
-# Include API Routes
-app.include_router(auth_router, prefix="/api/v1")
-app.include_router(admin_router, prefix="/api/v1")
+# Include API Routes using settings (root_prefix is configurable via environment/.env)
+app.include_router(
+    auth_router, 
+    prefix=settings.api_route(settings.AUTH_ROUTE)
+)
+app.include_router(
+    admin_router, 
+    prefix=settings.api_route(settings.ADMIN_ROUTE)
+)
 
 if __name__ == "__main__":
     import uvicorn
