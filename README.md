@@ -100,9 +100,9 @@ python scripts/migrate_database.py --check
 ### Technology Stack
 - **Framework**: FastAPI with async/await
 - **Database**: PostgreSQL with SQLAlchemy ORM
-- **Authentication**: JWT with HTTP-only cookies
 - **Validation**: Pydantic models
 - **Containerization**: Docker Compose
+- **Authentication**: Delegated to `sexto-andar-auth` service
 
 ### Project Structure
 
