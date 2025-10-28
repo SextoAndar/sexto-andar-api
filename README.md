@@ -2,7 +2,7 @@
 
 A professional FastAPI for managing properties, visits, and proposals with **100% delegated authentication**.
 
-> **Important**: This repository focuses on the real estate domain. All authentication, account management, and user administration is handled by the external [`sexto-andar-auth`](https://github.com/moonshinerd/sexto-andar-auth) service.
+> **Important**: This repository focuses on the real estate domain. All authentication, account management, and user administration is handled by the external [`sexto-andar-auth`](https://github.com/SextoAndar/sexto-andar-auth) service.
 
 ### Prerequisites
 - Docker and Docker Compose
@@ -11,7 +11,7 @@ A professional FastAPI for managing properties, visits, and proposals with **100
 ### 1. Clone and setup environment
 
 ```bash
-git clone <your-repository>
+git clone git@github.com:SextoAndar/sexto-andar-api.git
 cd sexto-andar-api
 
 # Create and activate a virtual environment (optional but recommended)
@@ -123,25 +123,7 @@ scripts/               # Utility scripts
 └── README.md          # Script documentation
 ```
 
-## 🔐 Authentication
-
-**NOTE**: This repository delegates 100% of authentication to the external `sexto-andar-auth` service.
-
-### User Types (managed by sexto-andar-auth)
-- **USER**: Browse properties, schedule visits, make proposals
-- **PROPERTY_OWNER**: Manage own properties and view proposals
-- **ADMIN**: Full system access
-
-### Authentication Endpoints
-For authentication operations, use the `sexto-andar-auth` service:
-- `POST /api/v1/auth/register/user` - User registration
-- `POST /api/v1/auth/register/property-owner` - Property owner registration
-- `POST /api/v1/auth/login` - Login
-- `POST /api/v1/auth/logout` - Logout
-
-**Service**: https://github.com/moonshinerd/sexto-andar-auth
-
-## 🛠️ Development
+## ️ Development
 
 ### Run in development mode
 
@@ -252,13 +234,6 @@ docker-compose up -d postgres
 3. Run migrations after model changes
 4. Document new endpoints in OpenAPI documentation
 
-## 📞 Support
-
-- **Documentation**: http://localhost:8000/docs
-- **Issues**: Open an issue on the repository
-- **Health Check**: http://localhost:8000/health
-
----
 
 **Note**: This repository focuses on real estate domain (Properties, Visits, Proposals). 
 All authentication and account management is delegated to the `sexto-andar-auth` service.
