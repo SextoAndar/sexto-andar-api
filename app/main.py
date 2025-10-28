@@ -18,14 +18,7 @@ from app.database.connection import (
 )
 
 # Import models (this ensures they are registered with SQLAlchemy)
-# Account é gerenciado pelo serviço sexto-andar-auth no mesmo banco
 from app.models import Property, Address, Visit, Proposal
-
-# Import controllers/routers
-# Auth endpoints são gerenciados pelo serviço sexto-andar-auth (externo)
-# Admin endpoints were previously exposed here, but account management is
-# delegated to the auth service. If you still want admin routes in this
-# repo, consider implementing proxy endpoints that call the auth service.
 
 # Configure logging
 logging.basicConfig(
@@ -193,20 +186,6 @@ async def health_check():
         logger.error(f"Health check error: {e}")
         raise HTTPException(status_code=503, detail="Service unavailable")
 
-# API Routes will be added here
-# Example structure:
-# app.include_router(accounts.router, prefix="/api/v1/accounts", tags=["Accounts"])
-# app.include_router(properties.router, prefix="/api/v1/properties", tags=["Properties"])
-# app.include_router(visits.router, prefix="/api/v1/visits", tags=["Visits"])
-# app.include_router(proposals.router, prefix="/api/v1/proposals", tags=["Proposals"])
-
-# Include API Routes using settings (root_prefix is configurable via environment/.env)
-# Auth endpoints são delegados para sexto-andar-auth (AUTH_SERVICE_URL obrigatório)
-# NOTE: admin router registration removed because account management and
-# user administration are handled by the external auth service.
-# To re-enable admin routes from this repo (not recommended), import the
-# admin router and include it here using:
-# app.include_router(admin_router, prefix=settings.api_route(settings.ADMIN_ROUTE))
 
 if __name__ == "__main__":
     import uvicorn
