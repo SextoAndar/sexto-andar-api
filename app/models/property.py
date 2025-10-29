@@ -91,6 +91,18 @@ class Property(BaseModel):
         nullable=False
     )
     
+    # House-specific fields (US14)
+    landPrice = Column(
+        Numeric(10, 2),
+        nullable=True  # Only for houses
+    )
+    
+    isSingleHouse = Column(
+        Boolean,
+        default=True,
+        nullable=True  # Only for houses
+    )
+    
     # Enums for sales type and property type
     salesType = Column(
         Enum(SalesTypeEnum),

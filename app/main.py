@@ -19,6 +19,9 @@ from app.database.connection import (
 # Import models (this ensures they are registered with SQLAlchemy)
 from app.models import Property, Address, Visit, Proposal
 
+# Import controllers/routers
+from app.controllers.property_controller import router as property_router
+
 # Import API documentation configuration
 from app.config.api_docs import (
     API_TITLE,
@@ -136,8 +139,10 @@ async def health_check():
         raise HTTPException(status_code=503, detail="Service unavailable")
 
 # Include all API routes under the api_router
-# Example structure for adding routers:
-# api_router.include_router(properties_router)
+# Property router
+api_router.include_router(property_router)
+
+# Example structure for adding more routers:
 # api_router.include_router(visits_router)
 # api_router.include_router(proposals_router)
 
