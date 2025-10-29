@@ -260,12 +260,22 @@ class PropertyService:
                 detail="Error updating property"
             )
     
-    def delete_property(self, property_id: str, owner_id: str) -> None:
-        """Delete property (soft delete - deactivate)"""
+    def delete_property(self, property_id: str, user_id: str, is_admin: bool = False) -> None:
+        """
+        Delete property (soft delete - deactivate)
+        
+        Args:
+            property_id: Property ID to delete
+            user_id: User ID requesting deletion
+            is_admin: Whether the user is an admin
+        
+        Raises:
+            HTTPException: If user is not the owner and not an admin
+        """
         property_obj = self.get_property_by_id(property_id)
         
-        # Check ownership
-        if str(property_obj.idPropertyOwner) != owner_id:
+        # Check ownership (admins can delete any property)
+        if not is_admin and str(property_obj.idPropertyOwner) != user_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You don't have permission to delete this property"
@@ -273,7 +283,10 @@ class PropertyService:
         
         try:
             self.property_repo.deactivate(property_obj)
-            logger.info(f"Property deactivated successfully: {property_id}")
+            if is_admin:
+                logger.info(f"Property deactivated by ADMIN: {property_id}")
+            else:
+                logger.info(f"Property deactivated by owner: {property_id}")
             
         except Exception as e:
             logger.error(f"Error deleting property: {e}")

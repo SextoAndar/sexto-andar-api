@@ -107,10 +107,8 @@ class Proposal(BaseModel):
         "Property"
     )
     
-    user = relationship(
-        "Account",
-        foreign_keys=[idUser]
-    )
+    # NOTE: User (Account) is managed by sexto-andar-auth service
+    # We only store idUser (foreign key) but don't create relationship
 
     # Validations
     @validates('proposalValue')

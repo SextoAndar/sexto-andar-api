@@ -136,11 +136,9 @@ class Property(BaseModel):
     )
     
     # Relationships
-    # Relationship with PropertyOwner (Account)
-    property_owner = relationship(
-        "Account",
-        foreign_keys=[idPropertyOwner]
-    )
+    # NOTE: Property owner (Account) is managed by sexto-andar-auth service
+    # We only store the idPropertyOwner (foreign key) but don't create a relationship
+    # since Account model is not in this service
     
     # Relationship with Address (1:1 composition)
     address = relationship(

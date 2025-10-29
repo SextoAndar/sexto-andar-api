@@ -219,21 +219,23 @@ async def update_property(
 )
 async def delete_property(
     property_id: str,
-    current_owner: AuthUser = Depends(get_current_property_owner),
+    current_user: AuthUser = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
     Delete (deactivate) property.
     
-    **Required role:** PROPERTY_OWNER (must be the property owner)
+    **Required role:** PROPERTY_OWNER (must be the property owner) OR ADMIN
     
     **Note:** This performs a soft delete (deactivates the property).
-    Only the property owner can delete their properties.
+    - Property owners can only delete their own properties
+    - Admins can delete any property
     """
     property_service = PropertyService(db)
     property_service.delete_property(
         property_id=property_id,
-        owner_id=current_owner.id
+        user_id=current_user.id,
+        is_admin=current_user.is_admin()
     )
     
     return None
