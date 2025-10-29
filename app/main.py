@@ -6,9 +6,8 @@ Real Estate Management API
 import logging
 import sys
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
-from app.settings import settings
 
 # Import database functions
 from app.database.connection import (
@@ -19,6 +18,20 @@ from app.database.connection import (
 
 # Import models (this ensures they are registered with SQLAlchemy)
 from app.models import Property, Address, Visit, Proposal
+
+# Import API documentation configuration
+from app.config.api_docs import (
+    API_TITLE,
+    API_VERSION,
+    API_DESCRIPTION,
+    API_SERVERS,
+    API_TAGS_METADATA,
+    API_CONTACT,
+    API_LICENSE_INFO
+)
+
+# Import settings
+from app.settings import settings
 
 # Configure logging
 logging.basicConfig(
@@ -65,79 +78,13 @@ async def lifespan(app: FastAPI):
 
 # Create FastAPI application with professional documentation
 app = FastAPI(
-    title="Real Estate Management API",
-    description="""A professional FastAPI-based system for managing real estate properties, visits, and proposals.
-
-⚠️ **AUTHENTICATION DELEGATED**: This API delegates 100% of authentication to the external `sexto-andar-auth` service.
-All account management, registration, and login are handled by that service.
-
-## Authentication
-This API validates JWT tokens by calling the external `sexto-andar-auth` service:
-- All endpoints requiring auth send tokens to `AUTH_SERVICE_URL/api/v1/auth/introspect`
-- User registration & login: Use `sexto-andar-auth` service endpoints
-- Token validation: Automatic via dependency injection
-- Role-based access control: Managed by `sexto-andar-auth`
-
-## User Roles (managed by sexto-andar-auth)
-- USER: Browse properties, schedule visits, make proposals
-- PROPERTY_OWNER: Manage properties and view proposals  
-- ADMIN: Full system access and user management
-
-## Security Features
-- JWT token validation via remote service
-- Role-based access control
-- CORS protection
-- Input validation with Pydantic
-
-## Core Features
-- Property listing CRUD operations
-- Visit scheduling system
-- Proposal management
-
-## Technical Stack
-- Framework: FastAPI with async/await support
-- Database: PostgreSQL with SQLAlchemy ORM
-- Authentication: Remote JWT validation via `sexto-andar-auth`
-- Validation: Pydantic models
-- Documentation: Auto-generated OpenAPI/Swagger
-
-## Getting Started
-1. Start both services: `sexto-andar-auth` and this API
-2. Set `AUTH_SERVICE_URL` environment variable pointing to auth service
-3. All endpoints requiring auth will validate tokens with the auth service
-4. Register accounts and login via `sexto-andar-auth` service
-
-## Related Services
-- **sexto-andar-auth**: https://github.com/moonshinerd/sexto-andar-auth
-  - Handles: Account registration, login, JWT tokens, user management
-  - Database: Shared PostgreSQL with this API
-
-## API Versioning
-- Current Version: v1
-- Base URL: /api/v1
-- All endpoints are versioned for backwards compatibility
-""",
-    version="1.0.0",
-    terms_of_service="https://github.com/moonshinerd/sexto-andar-api",
-    contact={
-        "name": "API Support",
-        "url": "https://github.com/moonshinerd/sexto-andar-api/issues",
-        "email": "support@sextoandar.com",
-    },
-    license_info={
-        "name": "MIT",
-        "url": "https://github.com/moonshinerd/sexto-andar-api/blob/main/LICENSE",
-    },
-    servers=[
-        {
-            "url": "http://localhost:8000",
-            "description": "Development server"
-        },
-        {
-            "url": "https://api.sextoandar.com",
-            "description": "Production server"
-        }
-    ],
+    title=API_TITLE,
+    description=API_DESCRIPTION,
+    version=API_VERSION,
+    servers=API_SERVERS,
+    openapi_tags=API_TAGS_METADATA,
+    contact=API_CONTACT,
+    license_info=API_LICENSE_INFO,
     lifespan=lifespan
 )
 
@@ -150,20 +97,23 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Health check endpoints
-@app.get("/", tags=["health"], summary="Root Health Check")
-async def root():
+# Create API Router with base path
+api_router = APIRouter(prefix=settings.API_BASE_PATH)
+
+# Health check endpoints under api_router
+@api_router.get("/health", tags=["health"], summary="Root Health Check")
+async def health_root():
     """Root endpoint health check. Returns basic API information and status."""
     return {
-        "message": "Real Estate Management API is running",
+        "message": f"{API_TITLE} is running",
         "status": "healthy",
-        "version": "1.0.0",
-        "api": "Real Estate Management API",
-        "documentation": "/docs",
-        "redoc": "/redoc"
+        "version": API_VERSION,
+        "api": API_TITLE,
+        "documentation": f"{settings.API_BASE_PATH}/docs",
+        "redoc": f"{settings.API_BASE_PATH}/redoc"
     }
 
-@app.get("/health", tags=["health"], summary="Detailed Health Check")
+@api_router.get("/health/detailed", tags=["health"], summary="Detailed Health Check")
 async def health_check():
     """Comprehensive health check including database connectivity status."""
     try:
@@ -174,17 +124,36 @@ async def health_check():
             "status": "healthy" if db_healthy else "unhealthy",
             "database": "connected" if db_healthy else "disconnected",
             "api": "running",
-            "timestamp": "2025-09-05T15:00:00Z",
             "checks": {
                 "database": "connected" if db_healthy else "disconnected",
                 "api": "running",
-                "authentication": "available"
+                "authentication": "delegated"
             }
         }
         
     except Exception as e:
         logger.error(f"Health check error: {e}")
         raise HTTPException(status_code=503, detail="Service unavailable")
+
+# Include all API routes under the api_router
+# Example structure for adding routers:
+# api_router.include_router(properties_router)
+# api_router.include_router(visits_router)
+# api_router.include_router(proposals_router)
+
+# Include the main API router in the app
+app.include_router(api_router)
+
+# Root endpoint - Returns API information
+@app.get("/", tags=["root"], summary="API Root", include_in_schema=False)
+async def root():
+    """Root endpoint - Returns API information."""
+    return {
+        "message": API_TITLE,
+        "version": API_VERSION,
+        "docs": f"{settings.API_BASE_PATH}/docs",
+        "health": f"{settings.API_BASE_PATH}/health"
+    }
 
 
 if __name__ == "__main__":
