@@ -41,7 +41,7 @@ class Proposal(BaseModel):
     
     idUser = Column(
         UUID(as_uuid=True),
-        ForeignKey('accounts.id'),
+        # ForeignKey('accounts.id'),  # Commented out - table in different service
         nullable=False,
         index=True
     )

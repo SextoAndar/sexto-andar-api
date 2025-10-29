@@ -277,7 +277,8 @@ def validate_models():
     """Validate all SQLAlchemy models"""
     try:
         # Import all models to ensure they're registered with Base
-        from ..models import account, property, address, visit, proposal
+        # NOTE: account model is in sexto-andar-auth service, not here
+        from ..models import property, address, visit, proposal
         
         # Get inspector to check database structure
         inspector = inspect(engine)

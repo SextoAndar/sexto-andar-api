@@ -32,9 +32,11 @@ class Property(BaseModel):
     )
     
     # Foreign Key to PropertyOwner (Account with property_owner role)
+    # NOTE: Foreign key constraint should be created manually in database
+    # since accounts table is managed by sexto-andar-auth service
     idPropertyOwner = Column(
         UUID(as_uuid=True),
-        ForeignKey('accounts.id'),
+        # ForeignKey('accounts.id'),  # Commented out - table in different service
         nullable=False,
         index=True
     )
@@ -48,7 +50,7 @@ class Property(BaseModel):
     
     # Property attributes
     propertySize = Column(
-        Numeric(10, 10),  # 10 digits, 10 decimals
+        Numeric(10, 2),  # 10 digits total, 2 decimals (e.g., 99999999.99)
         nullable=False
     )
     

@@ -77,10 +77,12 @@ class PropertyService:
                 detail=str(e)
             )
         except Exception as e:
+            import traceback
             logger.error(f"Error creating house: {e}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Error creating house property"
+                detail=f"Error creating house property: {str(e)}"
             )
     
     def create_apartment(self, apartment_data: CreateApartmentRequest, owner_id: str) -> Property:
