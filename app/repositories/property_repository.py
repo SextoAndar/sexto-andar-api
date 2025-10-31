@@ -31,7 +31,7 @@ class PropertyRepository:
         sales_type: Optional[str] = None,
         active_only: bool = True
     ) -> Tuple[List[Property], int]:
-        """Get properties by owner with pagination and filters (US16)"""
+        """Get properties by owner with pagination and filters"""
         query = (
             self.db.query(Property)
             .options(joinedload(Property.address))

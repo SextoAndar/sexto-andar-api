@@ -28,7 +28,7 @@ class PropertyService:
     
     def create_house(self, house_data: CreateHouseRequest, owner_id: str) -> Property:
         """
-        Create a new house property (US14)
+        Create a new house property
         
         Args:
             house_data: House creation data
@@ -87,7 +87,7 @@ class PropertyService:
     
     def create_apartment(self, apartment_data: CreateApartmentRequest, owner_id: str) -> Property:
         """
-        Create a new apartment property (US15)
+        Create a new apartment property
         
         Args:
             apartment_data: Apartment creation data
@@ -164,14 +164,14 @@ class PropertyService:
         active_only: bool = True
     ) -> Tuple[List[Property], int]:
         """
-        Get properties by owner with pagination and filters (US16)
+        Get properties by owner with pagination and filters
         
         Args:
             owner_id: Property owner ID
             page: Page number
             size: Page size
-            property_type: Filter by property type (house/apartment)
-            sales_type: Filter by sales type (rent/sale)
+            property_type: Filter by property type (HOUSE/APARTMENT)
+            sales_type: Filter by sales type (RENT/SALE)
             active_only: Show only active properties
             
         Returns:
@@ -346,13 +346,14 @@ class PropertyService:
     
     def get_portfolio_stats(self, owner_id: str) -> dict:
         """
-        Get portfolio statistics for owner (US16)
+        Get comprehensive portfolio statistics for property owner
         
         Args:
             owner_id: Property owner ID
             
         Returns:
-            Dictionary with portfolio statistics
+            Dictionary with portfolio statistics including counts,
+            distribution by type/sales, and financial metrics
         """
         try:
             # Get all properties (including inactive)

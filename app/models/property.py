@@ -93,7 +93,7 @@ class Property(BaseModel):
         nullable=False
     )
     
-    # House-specific fields (US14)
+    # House-specific fields
     landPrice = Column(
         Numeric(10, 2),
         nullable=True  # Only for houses

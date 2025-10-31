@@ -46,7 +46,7 @@ class AddressResponse(BaseModel):
 
 
 class CreateHouseRequest(BaseModel):
-    """Create house request DTO (US14)"""
+    """Create house request DTO"""
     # Address
     address: AddressRequest
     
@@ -56,7 +56,7 @@ class CreateHouseRequest(BaseModel):
     propertyValue: Decimal = Field(..., gt=0, description="Property value")
     salesType: str = Field(..., description="Sales type: 'rent' or 'sale'")
     
-    # House-specific attributes (US14)
+    # House-specific attributes
     landPrice: Decimal = Field(..., gt=0, description="Land/terrain price")
     isSingleHouse: bool = Field(default=True, description="Is it a single house on the land?")
     
@@ -70,7 +70,7 @@ class CreateHouseRequest(BaseModel):
 
 
 class CreateApartmentRequest(BaseModel):
-    """Create apartment request DTO (US15)"""
+    """Create apartment request DTO"""
     # Address
     address: AddressRequest
     
@@ -80,7 +80,7 @@ class CreateApartmentRequest(BaseModel):
     propertyValue: Decimal = Field(..., gt=0, description="Property value")
     salesType: str = Field(..., description="Sales type: 'rent' or 'sale'")
     
-    # Apartment-specific attributes (US15)
+    # Apartment-specific attributes
     condominiumFee: Decimal = Field(..., ge=0, description="Condominium fee")
     commonArea: bool = Field(default=False, description="Has common area?")
     floor: int = Field(..., ge=-10, le=200, description="Floor number")
@@ -168,7 +168,7 @@ class PropertyListResponse(BaseModel):
 
 
 class PortfolioStatsResponse(BaseModel):
-    """Portfolio statistics response DTO (US16)"""
+    """Portfolio statistics response DTO"""
     total_properties: int = Field(description="Total number of properties")
     active_properties: int = Field(description="Number of active properties")
     inactive_properties: int = Field(description="Number of inactive properties")
