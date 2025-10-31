@@ -1,6 +1,7 @@
 version: '3.8'
 
 services:
+  # Postgres service - can be created here or use existing from sexto-andar-auth
   postgres:
     image: postgres:15-alpine
     container_name: sexto-andar-postgres
@@ -21,18 +22,17 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
+    profiles:
+      - full-stack  # Only start if using 'docker-compose --profile full-stack up'
+  
   migrate:
     build: 
       context: .
       dockerfile: Dockerfile
-    container_name: sexto-andar-migrate
+    container_name: sexto-andar-api-migrate
     environment:
-      DATABASE_URL: postgresql://sexto_andar_user:sexto_andar_pass@postgres:5432/sexto_andar_db
+      DATABASE_URL: postgresql://sexto_andar_user:sexto_andar_pass@sexto-andar-postgres:5432/sexto_andar_db
     command: python scripts/migrate_database.py --force
-    depends_on:
-      postgres:
-        condition: service_healthy
     networks:
       - sexto-andar-network
     volumes:
@@ -44,42 +44,27 @@ services:
     build: 
       context: .
       dockerfile: Dockerfile
-    container_name: sexto-andar-api
+    container_name: sexto-andar-properties-api
     restart: unless-stopped
     environment:
-      DATABASE_URL: postgresql://sexto_andar_user:sexto_andar_pass@postgres:5432/sexto_andar_db
+      DATABASE_URL: postgresql://sexto_andar_user:sexto_andar_pass@sexto-andar-postgres:5432/sexto_andar_db
+      AUTH_SERVICE_URL: http://sexto-andar-auth:8001
       SQL_DEBUG: "false"
     ports:
       - "8000:8000"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      migrate:
-        condition: service_completed_successfully
     networks:
       - sexto-andar-network
     volumes:
       - ./app:/app/app:ro  # Mount app directory for development (read-only)
 
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: sexto-andar-pgadmin
-    restart: unless-stopped
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@sextoandar.com
-      PGADMIN_DEFAULT_PASSWORD: admin123
-      PGADMIN_CONFIG_SERVER_MODE: "False"
-    ports:
-      - "8080:80"
-    depends_on:
-      - postgres
-    networks:
-      - sexto-andar-network
-
-volumes:
-  postgres_data:
-    driver: local
-
+# Network - use the one created by sexto-andar-auth
 networks:
   sexto-andar-network:
-    driver: bridge
+    external: true
+    name: sexto-andar-auth_sexto-andar-network  # Network created by auth service
+
+# Volume - use the one created by sexto-andar-auth
+volumes:
+  postgres_data:
+    external: true
+    name: sexto-andar-auth_postgres_data  # Volume created by auth service

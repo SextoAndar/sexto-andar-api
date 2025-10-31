@@ -9,13 +9,13 @@ import enum
 
 class SalesTypeEnum(enum.Enum):
     """Enum for sales type"""
-    RENT = "rent"
-    SALE = "sale"
+    RENT = "RENT"
+    SALE = "SALE"
 
 class PropertyTypeEnum(enum.Enum):
     """Enum for property type"""
-    APARTMENT = "apartment"
-    HOUSE = "house"
+    APARTMENT = "APARTMENT"
+    HOUSE = "HOUSE"
 
 class Property(BaseModel):
     """

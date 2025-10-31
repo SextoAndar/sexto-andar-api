@@ -12,7 +12,8 @@ from app.dtos.property_dto import (
     UpdatePropertyRequest,
     PropertyResponse,
     PropertyListResponse,
-    AddressResponse
+    AddressResponse,
+    PortfolioStatsResponse
 )
 from app.auth.dependencies import get_current_property_owner, get_current_user, AuthUser
 
@@ -153,16 +154,24 @@ async def list_properties(
 @router.get(
     "/owner/my-properties",
     response_model=PropertyListResponse,
-    summary="Get My Properties"
+    summary="Get My Properties (US16)"
 )
 async def get_my_properties(
     page: int = Query(1, ge=1, description="Page number"),
     size: int = Query(10, ge=1, le=100, description="Page size"),
+    property_type: Optional[str] = Query(None, description="Filter by property type (house/apartment)"),
+    sales_type: Optional[str] = Query(None, description="Filter by sales type (rent/sale)"),
+    active_only: bool = Query(True, description="Show only active properties"),
     current_owner: AuthUser = Depends(get_current_property_owner),
     db: Session = Depends(get_db)
 ):
     """
-    Get all properties owned by the authenticated property owner.
+    **US16:** Get all properties owned by the authenticated property owner.
+    
+    View and manage your property portfolio with filters:
+    - **property_type**: Filter by 'house' or 'apartment'
+    - **sales_type**: Filter by 'rent' or 'sale'
+    - **active_only**: Show only active properties (default: true)
     
     **Required role:** PROPERTY_OWNER
     """
@@ -170,7 +179,10 @@ async def get_my_properties(
     properties, total = property_service.get_properties_by_owner(
         owner_id=current_owner.id,
         page=page,
-        size=size
+        size=size,
+        property_type=property_type,
+        sales_type=sales_type,
+        active_only=active_only
     )
     
     total_pages = math.ceil(total / size) if total > 0 else 0
@@ -182,6 +194,34 @@ async def get_my_properties(
         size=size,
         total_pages=total_pages
     )
+
+
+@router.get(
+    "/owner/portfolio-stats",
+    response_model=PortfolioStatsResponse,
+    summary="Get Portfolio Statistics (US16)"
+)
+async def get_portfolio_stats(
+    current_owner: AuthUser = Depends(get_current_property_owner),
+    db: Session = Depends(get_db)
+):
+    """
+    **US16:** Get comprehensive statistics about your property portfolio.
+    
+    Returns insights including:
+    - Total properties (active/inactive)
+    - Distribution by property type (houses/apartments)
+    - Distribution by sales type (rent/sale)
+    - Total portfolio value
+    - Average property value
+    - Potential monthly rent income
+    
+    **Required role:** PROPERTY_OWNER
+    """
+    property_service = PropertyService(db)
+    stats = property_service.get_portfolio_stats(current_owner.id)
+    
+    return PortfolioStatsResponse(**stats)
 
 
 @router.put(

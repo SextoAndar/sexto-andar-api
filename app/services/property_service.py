@@ -158,10 +158,33 @@ class PropertyService:
         self, 
         owner_id: str, 
         page: int = 1, 
-        size: int = 10
+        size: int = 10,
+        property_type: Optional[str] = None,
+        sales_type: Optional[str] = None,
+        active_only: bool = True
     ) -> Tuple[List[Property], int]:
-        """Get properties by owner with pagination"""
-        return self.property_repo.get_by_owner(owner_id, page, size)
+        """
+        Get properties by owner with pagination and filters (US16)
+        
+        Args:
+            owner_id: Property owner ID
+            page: Page number
+            size: Page size
+            property_type: Filter by property type (house/apartment)
+            sales_type: Filter by sales type (rent/sale)
+            active_only: Show only active properties
+            
+        Returns:
+            Tuple of (properties list, total count)
+        """
+        return self.property_repo.get_by_owner(
+            owner_id, 
+            page, 
+            size,
+            property_type=property_type,
+            sales_type=sales_type,
+            active_only=active_only
+        )
     
     def get_all_properties(
         self,
@@ -319,4 +342,66 @@ class PropertyService:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Error activating property"
+            )
+    
+    def get_portfolio_stats(self, owner_id: str) -> dict:
+        """
+        Get portfolio statistics for owner (US16)
+        
+        Args:
+            owner_id: Property owner ID
+            
+        Returns:
+            Dictionary with portfolio statistics
+        """
+        try:
+            # Get all properties (including inactive)
+            all_properties, total = self.property_repo.get_by_owner(
+                owner_id, 
+                page=1, 
+                size=1000,  # Get all
+                active_only=False
+            )
+            
+            # Calculate statistics
+            active_count = sum(1 for p in all_properties if p.is_active)
+            inactive_count = total - active_count
+            
+            # By property type
+            houses = [p for p in all_properties if p.is_house()]
+            apartments = [p for p in all_properties if p.is_apartment()]
+            
+            # By sales type
+            for_sale = [p for p in all_properties if p.salesType == SalesTypeEnum.SALE]
+            for_rent = [p for p in all_properties if p.salesType == SalesTypeEnum.RENT]
+            
+            # Financial calculations
+            total_value = sum(p.propertyValue for p in all_properties if p.is_active)
+            avg_value = total_value / active_count if active_count > 0 else Decimal('0')
+            
+            # Calculate potential monthly rent (only for rent properties)
+            rent_potential = sum(
+                p.propertyValue * Decimal('0.006')  # Assuming 0.6% monthly rent
+                for p in for_rent 
+                if p.is_active
+            )
+            
+            return {
+                "total_properties": total,
+                "active_properties": active_count,
+                "inactive_properties": inactive_count,
+                "total_houses": len(houses),
+                "total_apartments": len(apartments),
+                "total_for_sale": len(for_sale),
+                "total_for_rent": len(for_rent),
+                "total_portfolio_value": total_value,
+                "average_property_value": avg_value,
+                "total_monthly_rent_potential": rent_potential
+            }
+            
+        except Exception as e:
+            logger.error(f"Error calculating portfolio stats: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Error calculating portfolio statistics"
             )

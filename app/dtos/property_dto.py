@@ -165,3 +165,26 @@ class PropertyListResponse(BaseModel):
     page: int
     size: int
     total_pages: int
+
+
+class PortfolioStatsResponse(BaseModel):
+    """Portfolio statistics response DTO (US16)"""
+    total_properties: int = Field(description="Total number of properties")
+    active_properties: int = Field(description="Number of active properties")
+    inactive_properties: int = Field(description="Number of inactive properties")
+    
+    # By property type
+    total_houses: int = Field(description="Total houses")
+    total_apartments: int = Field(description="Total apartments")
+    
+    # By sales type
+    total_for_sale: int = Field(description="Properties for sale")
+    total_for_rent: int = Field(description="Properties for rent")
+    
+    # Financial
+    total_portfolio_value: Decimal = Field(description="Sum of all property values")
+    average_property_value: Decimal = Field(description="Average property value")
+    total_monthly_rent_potential: Decimal = Field(description="Potential monthly rent income")
+    
+    class Config:
+        from_attributes = True

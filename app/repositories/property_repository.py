@@ -22,13 +22,40 @@ class PropertyRepository:
             .first()
         )
     
-    def get_by_owner(self, owner_id: str, page: int = 1, size: int = 10) -> Tuple[List[Property], int]:
-        """Get properties by owner with pagination"""
+    def get_by_owner(
+        self, 
+        owner_id: str, 
+        page: int = 1, 
+        size: int = 10,
+        property_type: Optional[str] = None,
+        sales_type: Optional[str] = None,
+        active_only: bool = True
+    ) -> Tuple[List[Property], int]:
+        """Get properties by owner with pagination and filters (US16)"""
         query = (
             self.db.query(Property)
             .options(joinedload(Property.address))
             .filter(Property.idPropertyOwner == owner_id)
+            .order_by(Property.created_at.desc())
         )
+        
+        # Apply filters
+        if active_only:
+            query = query.filter(Property.is_active == True)
+        
+        if property_type:
+            try:
+                prop_type_enum = PropertyTypeEnum(property_type.upper())
+                query = query.filter(Property.propertyType == prop_type_enum)
+            except ValueError:
+                pass  # Ignore invalid property type
+        
+        if sales_type:
+            try:
+                sales_type_enum = SalesTypeEnum(sales_type.upper())
+                query = query.filter(Property.salesType == sales_type_enum)
+            except ValueError:
+                pass  # Ignore invalid sales type
         
         # Get total count
         total = query.count()
