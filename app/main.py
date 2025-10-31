@@ -88,7 +88,10 @@ app = FastAPI(
     openapi_tags=API_TAGS_METADATA,
     contact=API_CONTACT,
     license_info=API_LICENSE_INFO,
-    lifespan=lifespan
+    lifespan=lifespan,
+    docs_url=f"{settings.API_BASE_PATH}/docs",
+    redoc_url=f"{settings.API_BASE_PATH}/redoc",
+    openapi_url=f"{settings.API_BASE_PATH}/openapi.json"
 )
 
 # CORS middleware (read from settings / .env)
@@ -157,6 +160,7 @@ async def root():
         "message": API_TITLE,
         "version": API_VERSION,
         "docs": f"{settings.API_BASE_PATH}/docs",
+        "redoc": f"{settings.API_BASE_PATH}/redoc",
         "health": f"{settings.API_BASE_PATH}/health"
     }
 

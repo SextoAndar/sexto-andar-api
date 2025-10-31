@@ -56,6 +56,9 @@ services:
       - sexto-andar-network
     volumes:
       - ./app:/app/app:ro  # Mount app directory for development (read-only)
+    depends_on:
+      migrate:
+        condition: service_completed_successfully  # Wait for migrations to complete
 
 # Network - use the one created by sexto-andar-auth
 networks:

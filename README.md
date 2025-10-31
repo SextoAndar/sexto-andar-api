@@ -24,10 +24,16 @@ source venv/bin/activate  # Linux/Mac
 
 ```bash
 # Start everything at once - automatic migration included!
-docker-compose up --build -d
+docker-compose up -d
 ```
 
-Migration will run automatically before the API starts.
+**What happens:**
+1. 📦 Docker checks if postgres exists (uses existing from sexto-andar-auth or creates new)
+2. 🔄 Migration service runs and creates/updates properties-api tables
+3. 🚀 API service starts after migrations complete successfully
+4. ✅ API ready at http://localhost:8000
+
+**Note**: The `sexto-andar-api` migrations **do not affect** the `sexto-andar-auth` tables and vice-versa.
 
 ### 2.1. First installation (alternative manual)
 
@@ -96,6 +102,34 @@ python scripts/migrate_database.py --check
 - ✅ **Verification** - To check status before deployment
 
 ## 🏗️ Architecture
+
+### Microservices Architecture
+
+This project is part of a microservices architecture:
+
+**Services:**
+- **sexto-andar-auth** - Manages authentication and user accounts
+- **sexto-andar-api** - Manages properties, visits and proposals (this project)
+
+**Shared Resources:**
+- 🗄️ **PostgreSQL Database** - Shared database, segregated tables
+- 🌐 **Docker Network** - Communication between services
+- 💾 **Docker Volume** - Data persistence
+
+### Database Table Segregation
+
+Each service manages its own tables independently:
+
+| Service | Managed Tables | Migration Script |
+|---------|----------------|------------------|
+| **sexto-andar-auth** | `accounts` | `sexto-andar-auth/scripts/migrate_database.py` |
+| **sexto-andar-api** | `properties`, `addresses`, `visits`, `proposals` | `sexto-andar-api/scripts/migrate_database.py` |
+
+**Benefits of this architecture:**
+- ✅ Independent migrations - each service updates only its tables
+- ✅ Independent deployment - services can start in any order
+- ✅ Zero conflicts - completely segregated tables
+- ✅ Scalability - each service can scale independently
 
 ### Technology Stack
 - **Framework**: FastAPI with async/await
@@ -181,11 +215,45 @@ Logs are configured to stdout and include:
 
 ## 🐳 Docker
 
+### Deployment Scenarios
+
+**Scenario 1: Auth service already running** (Recommended)
+```bash
+# sexto-andar-auth is already up, just start the API
+cd sexto-andar-api
+docker-compose up -d
+```
+- Uses postgres, network and volume from auth service
+- Runs migrations only for properties-api tables
+- API starts after migrations complete
+
+**Scenario 2: Standalone API** (For isolated development)
+```bash
+# Start everything including own postgres
+cd sexto-andar-api
+docker-compose --profile full-stack up -d
+```
+- Creates local postgres, network and volume
+- Useful for development without depending on auth service
+- Auth service can use these resources when it starts later
+
 ### Available services:
 - **migrate**: Runs migrations automatically (runs once then stops)
+  - Creates/updates tables: `properties`, `addresses`, `visits`, `proposals`
+  - **Does NOT touch** the `accounts` table (managed by auth service)
 - **api**: FastAPI application (port 8000) - depends on migration
-- **postgres**: PostgreSQL 15 (port 5432)
+- **postgres**: PostgreSQL 15 (port 5432) - shared with auth service
 - **pgadmin**: PostgreSQL web interface (port 8080)
+
+### Service Dependencies:
+
+```
+postgres (healthy) 
+    ↓
+migrate (completes successfully)
+    ↓
+api (starts and runs)
+```
 
 ### Useful commands:
 
@@ -195,12 +263,14 @@ docker-compose down
 
 # View logs of a service
 docker-compose logs api
+docker-compose logs migrate
 
-# Rebuild images
+# Rebuild images after code changes
 docker-compose build
 
-# Run only the database
-docker-compose up -d postgres
+# Restart with fresh migrations
+docker-compose down
+docker-compose up -d
 ```
 
 ## ⚠️ Important Notes
