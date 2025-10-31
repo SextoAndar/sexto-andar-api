@@ -46,6 +46,8 @@ services:
       dockerfile: Dockerfile
     container_name: sexto-andar-properties-api
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
       DATABASE_URL: postgresql://sexto_andar_user:sexto_andar_pass@sexto-andar-postgres:5432/sexto_andar_db
       AUTH_SERVICE_URL: http://sexto-andar-auth:8001

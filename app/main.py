@@ -80,6 +80,8 @@ async def lifespan(app: FastAPI):
         logger.error(f"Shutdown error: {e}")
 
 # Create FastAPI application with professional documentation
+# Adjust paths based on API_BASE_PATH
+base_path = settings.API_BASE_PATH if settings.API_BASE_PATH != "/" else ""
 app = FastAPI(
     title=API_TITLE,
     description=API_DESCRIPTION,
@@ -89,9 +91,9 @@ app = FastAPI(
     contact=API_CONTACT,
     license_info=API_LICENSE_INFO,
     lifespan=lifespan,
-    docs_url=f"{settings.API_BASE_PATH}/docs",
-    redoc_url=f"{settings.API_BASE_PATH}/redoc",
-    openapi_url=f"{settings.API_BASE_PATH}/openapi.json"
+    docs_url=f"{base_path}/docs",
+    redoc_url=f"{base_path}/redoc",
+    openapi_url=f"{base_path}/openapi.json"
 )
 
 # CORS middleware (read from settings / .env)
@@ -104,19 +106,22 @@ app.add_middleware(
 )
 
 # Create API Router with base path
-api_router = APIRouter(prefix=settings.API_BASE_PATH)
+# FastAPI doesn't allow "/" as prefix, use empty string instead
+api_prefix = settings.API_BASE_PATH if settings.API_BASE_PATH != "/" else ""
+api_router = APIRouter(prefix=api_prefix)
 
 # Health check endpoints under api_router
 @api_router.get("/health", tags=["health"], summary="Root Health Check")
 async def health_root():
     """Root endpoint health check. Returns basic API information and status."""
+    base_path = settings.API_BASE_PATH if settings.API_BASE_PATH != "/" else ""
     return {
         "message": f"{API_TITLE} is running",
         "status": "healthy",
         "version": API_VERSION,
         "api": API_TITLE,
-        "documentation": f"{settings.API_BASE_PATH}/docs",
-        "redoc": f"{settings.API_BASE_PATH}/redoc"
+        "documentation": f"{base_path}/docs",
+        "redoc": f"{base_path}/redoc"
     }
 
 @api_router.get("/health/detailed", tags=["health"], summary="Detailed Health Check")
@@ -143,7 +148,7 @@ async def health_check():
 
 # Include all API routes under the api_router
 # Property router
-api_router.include_router(property_router)
+api_router.include_router(property_router, prefix="/properties")
 
 # Example structure for adding more routers:
 # api_router.include_router(visits_router)
@@ -156,12 +161,13 @@ app.include_router(api_router)
 @app.get("/", tags=["root"], summary="API Root", include_in_schema=False)
 async def root():
     """Root endpoint - Returns API information."""
+    base_path = settings.API_BASE_PATH if settings.API_BASE_PATH != "/" else ""
     return {
         "message": API_TITLE,
         "version": API_VERSION,
-        "docs": f"{settings.API_BASE_PATH}/docs",
-        "redoc": f"{settings.API_BASE_PATH}/redoc",
-        "health": f"{settings.API_BASE_PATH}/health"
+        "docs": f"{base_path}/docs",
+        "redoc": f"{base_path}/redoc",
+        "health": f"{base_path}/health"
     }
 
 
