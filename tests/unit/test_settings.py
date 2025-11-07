@@ -5,6 +5,7 @@ import pytest
 import os
 
 
+@pytest.mark.unit
 class TestSettings:
     """Test application settings"""
     

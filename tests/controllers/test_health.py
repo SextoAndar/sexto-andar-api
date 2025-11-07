@@ -5,6 +5,8 @@ import pytest
 from fastapi.testclient import TestClient
 
 
+@pytest.mark.integration
+@pytest.mark.controllers
 class TestHealthEndpoints:
     """Test health check endpoints"""
     

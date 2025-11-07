@@ -4,6 +4,7 @@ These tests verify end-to-end functionality with database
 """
 
 import pytest
+from uuid import uuid4
 from decimal import Decimal
 from sqlalchemy.orm import Session
 from app.services.property_service import PropertyService
@@ -18,7 +19,7 @@ class TestPropertyLifecycle:
     def test_create_house_full_workflow(self, db_session: Session, test_house_data):
         """Test complete house creation workflow"""
         service = PropertyService(db_session)
-        owner_id = "test-owner-123"
+        owner_id = str(uuid4())  # Use valid UUID
         
         # Create house
         house_request = CreateHouseRequest(**test_house_data)
@@ -42,7 +43,7 @@ class TestPropertyLifecycle:
     def test_create_update_delete_workflow(self, db_session: Session, test_house_data):
         """Test create -> update -> delete workflow"""
         service = PropertyService(db_session)
-        owner_id = "test-owner-456"
+        owner_id = str(uuid4())
         
         # 1. Create
         house_request = CreateHouseRequest(**test_house_data)
@@ -75,7 +76,7 @@ class TestPropertyLifecycle:
     def test_multiple_properties_same_owner(self, db_session: Session, test_house_data, test_apartment_data):
         """Test creating multiple properties for same owner"""
         service = PropertyService(db_session)
-        owner_id = "test-owner-multi"
+        owner_id = str(uuid4())
         
         # Create house
         house_request = CreateHouseRequest(**test_house_data)
@@ -103,7 +104,7 @@ class TestPropertyFiltering:
     def test_filter_by_sales_type(self, db_session: Session, test_house_data):
         """Test filtering properties by sales type"""
         service = PropertyService(db_session)
-        owner_id = "test-owner-filter"
+        owner_id = str(uuid4())
         
         # Create properties with different sales types
         test_house_data["salesType"] = "sale"
@@ -129,7 +130,7 @@ class TestPropertyFiltering:
     def test_filter_by_property_type(self, db_session: Session, test_house_data, test_apartment_data):
         """Test filtering properties by type"""
         service = PropertyService(db_session)
-        owner_id = "test-owner-type-filter"
+        owner_id = str(uuid4())
         
         # Create house
         house_request = CreateHouseRequest(**test_house_data)
@@ -154,7 +155,7 @@ class TestPropertyFiltering:
     def test_filter_active_only(self, db_session: Session, test_house_data):
         """Test filtering active vs inactive properties"""
         service = PropertyService(db_session)
-        owner_id = "test-owner-active-filter"
+        owner_id = str(uuid4())
         
         # Create properties
         house_request = CreateHouseRequest(**test_house_data)
@@ -186,7 +187,7 @@ class TestPropertyStatistics:
     def test_portfolio_statistics_calculation(self, db_session: Session, test_house_data, test_apartment_data):
         """Test portfolio statistics are calculated correctly"""
         service = PropertyService(db_session)
-        owner_id = "test-owner-stats"
+        owner_id = str(uuid4())
         
         # Create 2 houses for sale
         test_house_data["salesType"] = "sale"
@@ -219,7 +220,7 @@ class TestPropertyStatistics:
     def test_statistics_with_inactive_properties(self, db_session: Session, test_house_data):
         """Test statistics correctly handle inactive properties"""
         service = PropertyService(db_session)
-        owner_id = "test-owner-stats-inactive"
+        owner_id = str(uuid4())
         
         # Create 3 houses
         house_request = CreateHouseRequest(**test_house_data)
@@ -247,7 +248,7 @@ class TestPropertyPagination:
     def test_pagination_first_page(self, db_session: Session, test_house_data):
         """Test retrieving first page of results"""
         service = PropertyService(db_session)
-        owner_id = "test-owner-pagination"
+        owner_id = str(uuid4())
         
         # Create 15 properties
         house_request = CreateHouseRequest(**test_house_data)
@@ -265,7 +266,7 @@ class TestPropertyPagination:
     def test_pagination_second_page(self, db_session: Session, test_house_data):
         """Test retrieving second page of results"""
         service = PropertyService(db_session)
-        owner_id = "test-owner-pagination-2"
+        owner_id = str(uuid4())
         
         # Create 15 properties
         house_request = CreateHouseRequest(**test_house_data)
@@ -284,7 +285,7 @@ class TestPropertyPagination:
     def test_different_page_sizes(self, db_session: Session, test_house_data, page_size):
         """Test pagination with different page sizes"""
         service = PropertyService(db_session)
-        owner_id = f"test-owner-size-{page_size}"
+        owner_id = str(uuid4())  # Use UUID instead of string
         
         # Create 25 properties
         house_request = CreateHouseRequest(**test_house_data)
@@ -307,7 +308,7 @@ class TestPropertyOwnership:
     def test_owner_can_update_own_property(self, db_session: Session, test_house_data):
         """Test owner can update their own property"""
         service = PropertyService(db_session)
-        owner_id = "test-owner-ownership"
+        owner_id = str(uuid4())
         
         house_request = CreateHouseRequest(**test_house_data)
         created = service.create_house(house_request, owner_id)
@@ -324,8 +325,8 @@ class TestPropertyOwnership:
     def test_non_owner_cannot_update_property(self, db_session: Session, test_house_data):
         """Test non-owner cannot update property"""
         service = PropertyService(db_session)
-        owner_id = "test-owner-original"
-        other_user_id = "test-owner-other"
+        owner_id = str(uuid4())
+        other_user_id = str(uuid4())  # Different UUID
         
         house_request = CreateHouseRequest(**test_house_data)
         created = service.create_house(house_request, owner_id)
@@ -344,8 +345,8 @@ class TestPropertyOwnership:
     def test_admin_can_delete_any_property(self, db_session: Session, test_house_data):
         """Test admin can delete any property"""
         service = PropertyService(db_session)
-        owner_id = "test-owner-admin-test"
-        admin_id = "test-admin-123"
+        owner_id = str(uuid4())
+        admin_id = str(uuid4())  # Different UUID for admin
         
         house_request = CreateHouseRequest(**test_house_data)
         created = service.create_house(house_request, owner_id)
