@@ -23,7 +23,7 @@ class TestPropertyServiceCreation:
         
         assert property_obj.id is not None
         assert property_obj.propertyType == PropertyTypeEnum.HOUSE
-        assert property_obj.idPropertyOwner == owner_id
+        assert str(property_obj.idPropertyOwner) == owner_id
         assert property_obj.is_active is True
         assert property_obj.address is not None
         assert property_obj.address.street == test_house_data["address"]["street"]
@@ -121,7 +121,7 @@ class TestPropertyServiceRetrieval:
         )
         
         assert total == 2
-        assert all(p.idPropertyOwner == owner_id for p in properties)
+        assert all(str(p.idPropertyOwner) == owner_id for p in properties)
 
 
 class TestPropertyServiceUpdate:

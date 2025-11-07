@@ -170,7 +170,7 @@ class TestPropertyRepositoryRead:
         properties, total = repo.get_by_owner(owner_id, page=1, size=10)
         
         assert total == 2
-        assert all(p.idPropertyOwner == owner_id for p in properties)
+        assert all(str(p.idPropertyOwner) == owner_id for p in properties)
 
 
 class TestPropertyRepositoryUpdate:
@@ -231,10 +231,10 @@ class TestPropertyRepositoryDelete:
         created = repo.create(property_obj)
         property_id = str(created.id)
         
-        # Delete it
-        result = repo.delete(property_id)
+        # Delete it (delete expects the Property object, not ID)
+        repo.delete(created)
         
-        assert result is True
+        assert True  # If no exception, deletion was successful
         
         # Verify it's gone
         retrieved = repo.get_by_id(property_id)

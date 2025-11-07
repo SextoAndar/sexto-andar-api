@@ -38,7 +38,9 @@ class TestPropertyModel:
         assert SalesTypeEnum.RENT.value == "RENT"
     
     def test_property_default_values(self):
-        """Test property default values"""
+        """Test property can be created with required fields only"""
+        from datetime import datetime
+        
         property_obj = Property(
             idPropertyOwner=str(uuid4()),
             propertySize=Decimal("100.00"),
@@ -49,9 +51,9 @@ class TestPropertyModel:
             isPetAllowed=True
         )
         
-        # These are set by database defaults, not in Python
-        assert property_obj.created_at is not None
-        assert property_obj.updated_at is not None
+        # Object created successfully (timestamps set on database insert)
+        assert property_obj.propertySize == Decimal("100.00")
+        assert property_obj.propertyType == PropertyTypeEnum.HOUSE
 
 
 class TestAddressModel:

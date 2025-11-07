@@ -54,7 +54,7 @@ class PropertyService:
                 propertySize=house_data.propertySize,
                 description=house_data.description,
                 propertyValue=house_data.propertyValue,
-                salesType=SalesTypeEnum(house_data.salesType),
+                salesType=SalesTypeEnum(house_data.salesType.upper()),
                 propertyType=PropertyTypeEnum.HOUSE,
                 landPrice=house_data.landPrice,
                 isSingleHouse=house_data.isSingleHouse,
@@ -113,7 +113,7 @@ class PropertyService:
                 propertySize=apartment_data.propertySize,
                 description=apartment_data.description,
                 propertyValue=apartment_data.propertyValue,
-                salesType=SalesTypeEnum(apartment_data.salesType),
+                salesType=SalesTypeEnum(apartment_data.salesType.upper()),
                 propertyType=PropertyTypeEnum.APARTMENT,
                 condominiumFee=apartment_data.condominiumFee,
                 commonArea=apartment_data.commonArea,
@@ -195,9 +195,9 @@ class PropertyService:
         active_only: bool = True
     ) -> Tuple[List[Property], int]:
         """Get all properties with pagination and filters"""
-        # Convert string to enum if provided
-        property_type_enum = PropertyTypeEnum(property_type) if property_type else None
-        sales_type_enum = SalesTypeEnum(sales_type) if sales_type else None
+        # Convert string to enum if provided (handle both lowercase and uppercase)
+        property_type_enum = PropertyTypeEnum(property_type.upper()) if property_type else None
+        sales_type_enum = SalesTypeEnum(sales_type.upper()) if sales_type else None
         
         return self.property_repo.get_all_paginated(
             page=page,
@@ -235,7 +235,7 @@ class PropertyService:
                 property_obj.propertyValue = update_data.propertyValue
             
             if update_data.salesType is not None:
-                property_obj.salesType = SalesTypeEnum(update_data.salesType)
+                property_obj.salesType = SalesTypeEnum(update_data.salesType.upper())
             
             # Update apartment-specific fields
             if property_obj.is_apartment():
