@@ -158,8 +158,8 @@ class TestPropertyServiceUpdate:
         house_request = CreateHouseRequest(**test_house_data)
         property_obj = property_service.create_house(house_request, owner_id)
         
-        # Try to update with different owner
-        update_data = UpdatePropertyRequest(description="Hacked")
+        # Try to update with different owner (description must be 10+ chars)
+        update_data = UpdatePropertyRequest(description="Hacked property by unauthorized user")
         
         with pytest.raises(Exception):  # Should raise permission error
             property_service.update_property(
@@ -179,12 +179,14 @@ class TestPropertyServiceDeletion:
         house_request = CreateHouseRequest(**test_house_data)
         property_obj = property_service.create_house(house_request, owner_id)
         
-        # Deactivate it
-        deactivated = property_service.deactivate_property(
-            str(property_obj.id), owner_id
+        # Deactivate it (soft delete)
+        property_service.delete_property(
+            str(property_obj.id), owner_id, is_admin=False
         )
         
-        assert deactivated.is_active is False
+        # Fetch again and verify it's deactivated
+        updated = property_service.get_property_by_id(str(property_obj.id))
+        assert updated.is_active is False
     
     def test_reactivate_property_success(self, db_session: Session, test_house_data):
         """Test successful property reactivation"""
@@ -194,10 +196,10 @@ class TestPropertyServiceDeletion:
         # Create and deactivate a property
         house_request = CreateHouseRequest(**test_house_data)
         property_obj = property_service.create_house(house_request, owner_id)
-        property_service.deactivate_property(str(property_obj.id), owner_id)
+        property_service.delete_property(str(property_obj.id), owner_id, is_admin=False)
         
         # Reactivate it
-        reactivated = property_service.reactivate_property(
+        reactivated = property_service.activate_property(
             str(property_obj.id), owner_id
         )
         
@@ -219,18 +221,21 @@ class TestPropertyServiceStatistics:
         property_service.create_house(house_request, owner_id)
         property_service.create_apartment(apartment_request, owner_id)
         
-        # Deactivate one
+        # Deactivate one (using delete_property which does soft delete)
         house = property_service.create_house(house_request, owner_id)
-        property_service.deactivate_property(str(house.id), owner_id)
+        property_service.delete_property(str(house.id), owner_id, is_admin=False)
         
-        # Get statistics
-        stats = property_service.get_portfolio_statistics(owner_id)
+        # Get statistics (method is get_portfolio_stats, not get_portfolio_statistics)
+        stats = property_service.get_portfolio_stats(owner_id)
         
-        assert stats.totalProperties == 3
-        assert stats.activeProperties == 2
-        assert stats.inactiveProperties == 1
-        assert stats.totalHouses == 2
-        assert stats.totalApartments == 1
-        assert stats.propertiesForSale >= 1
-        assert stats.propertiesForRent >= 1
-        assert float(stats.totalPropertyValue) > 0
+        # Get statistics returns a dict with snake_case keys
+        assert stats["total_properties"] == 3
+        assert stats["active_properties"] == 2
+        assert stats["inactive_properties"] == 1
+        assert stats["total_houses"] == 2
+        assert stats["total_apartments"] == 1
+        assert stats["total_for_sale"] >= 1
+        assert stats["total_for_rent"] >= 1
+        assert float(stats["total_portfolio_value"]) > 0
+
+

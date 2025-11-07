@@ -216,15 +216,15 @@ class TestPropertyOwnerPortfolio:
         assert response.status_code == 200
         data = response.json()
         
-        assert "totalProperties" in data
-        assert "activeProperties" in data
-        assert "inactiveProperties" in data
-        assert "totalHouses" in data
-        assert "totalApartments" in data
-        assert "propertiesForSale" in data
-        assert "propertiesForRent" in data
-        assert "totalPropertyValue" in data
-        assert data["totalProperties"] >= 1
+        assert "total_properties" in data
+        assert "active_properties" in data
+        assert "inactive_properties" in data
+        assert "total_houses" in data
+        assert "total_apartments" in data
+        assert "total_for_sale" in data
+        assert "total_for_rent" in data
+        assert "total_portfolio_value" in data
+        assert data["total_properties"] >= 1
     
     def test_get_my_properties_without_auth(self, client):
         """Test accessing my properties without authentication fails"""
@@ -259,7 +259,8 @@ class TestPropertyUpdate:
         client = authenticated_property_owner["client"]
         fake_id = "00000000-0000-0000-0000-000000000000"
         
-        update_data = {"description": "Updated"}
+        # Use valid description (10+ chars) to pass validation
+        update_data = {"description": "Updated description with enough characters"}
         response = client.put(f"/api/properties/{fake_id}", json=update_data)
         
         assert response.status_code == 404
@@ -275,25 +276,38 @@ class TestPropertyDeletion:
         
         response = client.delete(f"/api/properties/{property_id}")
         
-        assert response.status_code == 200
-        data = response.json()
-        
-        assert data["message"] == "Property deactivated successfully"
-        assert data["property_id"] == property_id
+        # DELETE returns 204 No Content (no response body)
+        assert response.status_code == 204
     
-    def test_reactivate_property_success(self, authenticated_property_owner, created_property, db_session):
+    def test_reactivate_property_success(self, authenticated_property_owner, db_session, test_house_data):
         """Test successful property reactivation"""
         client = authenticated_property_owner["client"]
-        property_id = str(created_property.id)
+        owner = authenticated_property_owner["owner"]
+        
+        # Create a property for this owner
+        from app.services.property_service import PropertyService
+        from app.dtos.property_dto import CreateHouseRequest
+        
+        property_service = PropertyService(db_session)
+        house_request = CreateHouseRequest(**test_house_data)
+        property_obj = property_service.create_house(house_request, owner.id)
+        property_id = str(property_obj.id)
+        
+        # Ensure property is committed
+        db_session.commit()
         
         # First deactivate
-        client.delete(f"/api/properties/{property_id}")
+        delete_response = client.delete(f"/api/properties/{property_id}")
+        assert delete_response.status_code == 204
         
-        # Then reactivate
-        response = client.post(f"/api/properties/{property_id}/reactivate")
+        # Then reactivate (endpoint is /activate, not /reactivate)
+        response = client.post(f"/api/properties/{property_id}/activate")
         
         assert response.status_code == 200
         data = response.json()
         
-        assert data["message"] == "Property reactivated successfully"
-        assert data["property_id"] == property_id
+        # Response is the property object, not a message
+        assert data["id"] == property_id
+        assert data["is_active"] is True
+
+
