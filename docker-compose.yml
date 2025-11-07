@@ -1,5 +1,11 @@
 version: '3.8'
 
+# Services for Sexto Andar Properties API
+# - postgres: PostgreSQL database (shared with auth service or standalone)
+# - migrate: Database migration (runs once before tests)
+# - test: Test runner (runs before API starts - mandatory)
+# - api: Main properties API service (only starts if tests pass)
+
 services:
   # Postgres service - can be created here or use existing from sexto-andar-auth
   postgres:
@@ -40,6 +46,33 @@ services:
       - ./scripts:/app/scripts:ro
     restart: "no"  # Only run once
 
+  test:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: sexto-andar-api-test
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://sexto_andar_user:sexto_andar_pass@sexto-andar-postgres:5432/sexto_andar_test_db
+      AUTH_SERVICE_URL: http://sexto-andar-auth:8001
+      SQL_DEBUG: "false"
+      API_BASE_PATH: /api
+    command: >
+      sh -c "
+        psql -h sexto-andar-postgres -U sexto_andar_user -d postgres -c 'CREATE DATABASE sexto_andar_test_db;' || true &&
+        pytest tests/ -v --cov=app --cov-report=term-missing
+      "
+    depends_on:
+      migrate:
+        condition: service_completed_successfully  # Wait for migrations to complete
+    networks:
+      - sexto-andar-network
+    volumes:
+      - ./app:/app/app:ro
+      - ./tests:/app/tests:ro
+    restart: "no"  # Run once only
+
   api:
     build: 
       context: .
@@ -59,8 +92,8 @@ services:
     volumes:
       - ./app:/app/app:ro  # Mount app directory for development (read-only)
     depends_on:
-      migrate:
-        condition: service_completed_successfully  # Wait for migrations to complete
+      test:
+        condition: service_completed_successfully  # Wait for tests to pass
 
 # Network - use the one created by sexto-andar-auth
 networks:

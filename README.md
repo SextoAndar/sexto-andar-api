@@ -146,7 +146,7 @@ The project has a comprehensive test suite with **147 tests** covering all layer
 - **Parametrized Tests**: 74 test variations
 
 ```bash
-# Run all tests
+# Run all tests locally
 pytest
 
 # Run specific types
@@ -158,6 +158,8 @@ pytest --cov=app --cov-report=html
 ```
 
 **Status**: ✅ 147/147 tests passing (100%)
+
+**Note**: Tests run automatically in the Docker pipeline. The API only starts if all tests pass.
 
 For detailed test documentation, see [`tests/README.md`](tests/README.md).
 
