@@ -138,7 +138,28 @@ Each service manages its own tables independently:
 - **Containerization**: Docker Compose
 - **Authentication**: Delegated to `sexto-andar-auth` service
 
+## 🧪 Tests
 
+The project has a comprehensive test suite with **147 tests** covering all layers:
+- **Unit Tests**: 58 tests (validations, no database)
+- **Integration Tests**: 20 tests (complete workflows with database)
+- **Parametrized Tests**: 74 test variations
+
+```bash
+# Run all tests
+pytest
+
+# Run specific types
+pytest -m unit              # Fast unit tests only
+pytest -m integration       # Integration tests only
+
+# With coverage report
+pytest --cov=app --cov-report=html
+```
+
+**Status**: ✅ 147/147 tests passing (100%)
+
+For detailed test documentation, see [`tests/README.md`](tests/README.md).
 
 ## ️ Development
 
