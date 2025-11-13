@@ -21,6 +21,8 @@ from app.models import Property, Address, Visit, Proposal
 
 # Import controllers/routers
 from app.controllers.property_controller import router as property_router
+from app.controllers.visit_controller import router as visit_router
+from app.controllers.proposal_controller import router as proposal_router
 
 # Import API documentation configuration
 from app.config.api_docs import (
@@ -150,9 +152,11 @@ async def health_check():
 # Property router
 api_router.include_router(property_router, prefix="/properties")
 
-# Example structure for adding more routers:
-# api_router.include_router(visits_router)
-# api_router.include_router(proposals_router)
+# Visit router
+api_router.include_router(visit_router, prefix="/visits")
+
+# Proposal router
+api_router.include_router(proposal_router, prefix="/proposals")
 
 # Include the main API router in the app
 app.include_router(api_router)
