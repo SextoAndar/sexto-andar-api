@@ -1,5 +1,5 @@
 # app/repositories/visit_repository.py
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import and_, or_, desc
 from app.models.visit import Visit
 from app.models.property import Property
@@ -142,3 +142,35 @@ class VisitRepository:
         """Get the owner ID of a property"""
         property_obj = self.db.query(Property).filter(Property.id == property_id).first()
         return property_obj.idPropertyOwner if property_obj else None
+    
+    def get_by_owner(
+        self,
+        owner_id: UUID,
+        page: int = 1,
+        size: int = 10,
+        include_cancelled: bool = False,
+        include_completed: bool = True
+    ) -> Tuple[List[Visit], int]:
+        """Get all visits for properties owned by a specific owner with pagination"""
+        # Join with Property to filter by owner and eager load property and address
+        query = self.db.query(Visit)\
+            .join(Property, Visit.idProperty == Property.id)\
+            .filter(Property.idPropertyOwner == owner_id)\
+            .options(joinedload(Visit.property).joinedload(Property.address))
+        
+        if not include_cancelled:
+            query = query.filter(Visit.cancelled == False)
+        
+        if not include_completed:
+            query = query.filter(Visit.isVisitCompleted == False)
+        
+        # Count total
+        total = query.count()
+        
+        # Apply pagination and ordering
+        visits = query.order_by(desc(Visit.visitDate))\
+            .offset((page - 1) * size)\
+            .limit(size)\
+            .all()
+        
+        return visits, total

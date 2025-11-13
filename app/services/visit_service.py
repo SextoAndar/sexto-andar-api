@@ -219,3 +219,20 @@ class VisitService:
             )
         
         self.repository.delete(visit)
+    
+    def get_owner_visits(
+        self,
+        owner_id: UUID,
+        page: int = 1,
+        size: int = 10,
+        include_cancelled: bool = False,
+        include_completed: bool = True
+    ) -> Tuple[List[Visit], int]:
+        """Get all visits for properties owned by a specific owner"""
+        return self.repository.get_by_owner(
+            owner_id=owner_id,
+            page=page,
+            size=size,
+            include_cancelled=include_cancelled,
+            include_completed=include_completed
+        )

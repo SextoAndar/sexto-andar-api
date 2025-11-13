@@ -12,9 +12,12 @@ from app.dtos.visit_dto import (
     CompleteVisitRequest,
     CancelVisitRequest,
     VisitResponse,
-    VisitListResponse
+    VisitListResponse,
+    VisitWithUserResponse,
+    VisitWithUserListResponse
 )
-from app.auth.dependencies import get_current_user, AuthUser
+from app.auth.dependencies import get_current_user, get_current_property_owner, AuthUser
+from app.auth.auth_client import auth_client
 
 router = APIRouter(tags=["visits"])
 
@@ -318,6 +321,66 @@ async def get_property_visits(
     
     return VisitListResponse(
         visits=[VisitResponse.from_visit(v) for v in visits],
+        total=total,
+        page=page,
+        size=size,
+        total_pages=total_pages
+    )
+
+
+@router.get(
+    "/my-properties/visits",
+    response_model=VisitWithUserListResponse,
+    summary="View All Visits for My Properties (Property Owners)"
+)
+async def get_my_properties_visits(
+    page: int = Query(1, ge=1, description="Page number"),
+    size: int = Query(10, ge=1, le=100, description="Items per page"),
+    include_cancelled: bool = Query(False, description="Include cancelled visits"),
+    include_completed: bool = Query(True, description="Include completed visits"),
+    current_owner: AuthUser = Depends(get_current_property_owner),
+    db: Session = Depends(get_db)
+):
+    """
+    View all visits scheduled for your properties with detailed user information.
+    
+    **Authentication required:** Property Owner role
+    
+    **Query Parameters:**
+    - `page`: Page number (default: 1)
+    - `size`: Items per page (default: 10, max: 100)
+    - `include_cancelled`: Include cancelled visits (default: false)
+    - `include_completed`: Include completed visits (default: true)
+    
+    **Returns:** Paginated list of visits with user IDs
+    
+    **US21 Implementation:** This endpoint allows property owners to visualize all
+    scheduled visits for their properties along with visitor user IDs.
+    
+    **Note:** Full user details (name, email, phone) require an admin endpoint in the
+    auth service that doesn't currently exist. The API shows user IDs for now.
+    To enable full user details, the auth service needs: `GET /auth/admin/users/{user_id}`
+    """
+    visit_service = VisitService(db)
+    visits, total = visit_service.get_owner_visits(
+        owner_id=current_owner.id,
+        page=page,
+        size=size,
+        include_cancelled=include_cancelled,
+        include_completed=include_completed
+    )
+    
+    total_pages = math.ceil(total / size) if total > 0 else 0
+    
+    # Fetch user information for each visit
+    visit_responses = []
+    for visit in visits:
+        user_info = await auth_client.get_user_info(str(visit.idUser))
+        visit_response = VisitWithUserResponse.from_visit(visit, user_info)
+        visit_responses.append(visit_response)
+    
+    return VisitWithUserListResponse(
+        visits=visit_responses,
         total=total,
         page=page,
         size=size,

@@ -43,6 +43,20 @@ class Settings:
                 "Set the AUTH_SERVICE_URL environment variable.\n"
                 "Example: AUTH_SERVICE_URL=http://localhost:8001"
             )
+        
+        # JWT Secret - must match auth service
+        self.JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", "")
+        
+        # Internal API secret for inter-service communication
+        self.INTERNAL_API_SECRET: str = os.getenv("INTERNAL_API_SECRET", "")
+        
+        if not self.INTERNAL_API_SECRET:
+            import secrets
+            # Generate a random secret if not configured (dev only)
+            self.INTERNAL_API_SECRET = secrets.token_urlsafe(32)
+            if self.DEBUG:
+                print(f"⚠️  Generated temporary INTERNAL_API_SECRET: {self.INTERNAL_API_SECRET}")
+                print("   Set INTERNAL_API_SECRET in .env for production!")
     
     @property
     def root_prefix(self) -> str:
