@@ -13,7 +13,9 @@ from app.models.visit import Visit
 from app.models.proposal import Proposal
 from app.models.property import Property
 from app.settings import settings
+import logging
 
+logger = logging.getLogger(__name__)
 router = APIRouter(tags=["internal"])
 
 
@@ -44,7 +46,12 @@ async def check_user_property_relation(
     Only internal services (auth) should be able to call it.
     """
     # Validate internal secret
+    logger.debug(f"Received secret: {repr(x_internal_secret)}")
+    logger.debug(f"Expected secret: {repr(settings.INTERNAL_API_SECRET)}")
+    logger.debug(f"Secrets match: {x_internal_secret == settings.INTERNAL_API_SECRET}")
+    
     if x_internal_secret != settings.INTERNAL_API_SECRET:
+        logger.warning(f"Invalid internal secret attempt from user_id={user_id}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid internal API secret"
