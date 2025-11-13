@@ -39,7 +39,7 @@ class Visit(BaseModel):
     
     # Visit attributes
     visitDate = Column(
-        DateTime,
+        DateTime(timezone=True),
         nullable=False,
         index=True
     )
@@ -69,13 +69,13 @@ class Visit(BaseModel):
     
     # Timestamps
     created_at = Column(
-        DateTime,
+        DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
         nullable=False
     )
     
     updated_at = Column(
-        DateTime,
+        DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc),
         nullable=False

@@ -48,7 +48,7 @@ class Proposal(BaseModel):
     
     # Proposal attributes
     proposalDate = Column(
-        DateTime,
+        DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
         nullable=False
     )
@@ -78,25 +78,25 @@ class Proposal(BaseModel):
     )
     
     response_date = Column(
-        DateTime,
+        DateTime(timezone=True),
         nullable=True
     )
     
     # Proposal validity (default 30 days)
     expires_at = Column(
-        DateTime,
+        DateTime(timezone=True),
         nullable=True
     )
     
     # Timestamps
     created_at = Column(
-        DateTime,
+        DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
         nullable=False
     )
     
     updated_at = Column(
-        DateTime,
+        DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc),
         nullable=False

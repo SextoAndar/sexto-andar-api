@@ -90,7 +90,7 @@ class ProposalRepository:
         """Get all proposals for properties owned by a user"""
         query = self.db.query(Proposal)\
             .join(Property, Proposal.idProperty == Property.id)\
-            .filter(Property.idOwner == owner_id)
+            .filter(Property.idPropertyOwner == owner_id)
         
         if status:
             try:
@@ -152,4 +152,4 @@ class ProposalRepository:
     def get_property_owner_id(self, property_id: UUID) -> Optional[UUID]:
         """Get the owner ID of a property"""
         property_obj = self.db.query(Property).filter(Property.id == property_id).first()
-        return property_obj.idOwner if property_obj else None
+        return property_obj.idPropertyOwner if property_obj else None

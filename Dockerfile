@@ -26,6 +26,7 @@ RUN pip install --no-cache-dir --upgrade pip \
 
 # Copy application code
 COPY app/ ./app/
+COPY scripts/ ./scripts/
 
 # Create a non-root user
 RUN useradd --create-home --shell /bin/bash app \
