@@ -159,7 +159,17 @@ pytest --cov=app --cov-report=html
 
 **Status**: ✅ 147/147 tests passing (100%)
 
-**Note**: Tests run automatically in the Docker pipeline. The API only starts if all tests pass.
+**Note**: The `test` service is defined in `docker-compose.yml` but is **disabled by default** in the compose pipeline.
+If you want to run tests via Docker use the dedicated profile or run tests locally.
+
+Run tests in Docker (optional):
+```bash
+docker-compose --profile test up
+```
+Or run tests locally:
+```bash
+pytest
+```
 
 For detailed test documentation, see [`tests/README.md`](tests/README.md).
 

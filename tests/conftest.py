@@ -12,10 +12,11 @@ from unittest.mock import Mock, patch
 from uuid import uuid4
 
 # Set test environment variables before importing app
-os.environ["DATABASE_URL"] = "postgresql://sexto_andar_user:sexto_andar_pass@localhost:5432/sexto_andar_test_db"
-os.environ["AUTH_SERVICE_URL"] = "http://localhost:8001"
-os.environ["API_BASE_PATH"] = "/api"
-os.environ["SQL_DEBUG"] = "false"
+# Prefer environment-provided values (from docker-compose); only set defaults when missing
+os.environ.setdefault("DATABASE_URL", "postgresql://sexto_andar_user:sexto_andar_pass@localhost:5432/sexto_andar_test_db")
+os.environ.setdefault("AUTH_SERVICE_URL", "http://localhost:8001")
+os.environ.setdefault("API_BASE_PATH", "/api")
+os.environ.setdefault("SQL_DEBUG", "false")
 
 from app.main import app
 from app.database.connection import get_db

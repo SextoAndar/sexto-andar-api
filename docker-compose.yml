@@ -60,7 +60,7 @@ services:
       API_BASE_PATH: /api
     command: >
       sh -c "
-        psql -h sexto-andar-postgres -U sexto_andar_user -d postgres -c 'CREATE DATABASE sexto_andar_test_db;' || true &&
+        psql postgresql://sexto_andar_user:sexto_andar_pass@sexto-andar-postgres:5432/postgres -c 'CREATE DATABASE sexto_andar_test_db;' || true &&
         pytest tests/ -v --cov=app --cov-report=term-missing
       "
     depends_on:
@@ -72,6 +72,8 @@ services:
       - ./app:/app/app:ro
       - ./tests:/app/tests:ro
     restart: "no"  # Run once only
+    profiles:
+      - test  # Only start with: docker-compose --profile test up
 
   api:
     build: 
@@ -92,8 +94,8 @@ services:
     volumes:
       - ./app:/app/app:ro  # Mount app directory for development (read-only)
     depends_on:
-      test:
-        condition: service_completed_successfully  # Wait for tests to pass
+      migrate:
+        condition: service_completed_successfully  # Wait for migrations to complete
 
 # Network - use the one created by sexto-andar-auth
 networks:
