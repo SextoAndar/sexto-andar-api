@@ -401,7 +401,9 @@ class DataSeeder:
             selected_users = random.sample([u for u in users if "token" in u], num_visits)
             
             for j, user in enumerate(selected_users):
-                visit_date = (base_date + timedelta(days=i*2 + j)).isoformat()
+                # Create datetime with timezone
+                visit_datetime = base_date + timedelta(days=i*2 + j, hours=10)  # 10 AM
+                visit_date = visit_datetime.isoformat()
                 notes = random.choice(visit_notes)
                 
                 visit = self.create_visit(

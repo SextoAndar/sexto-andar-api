@@ -96,6 +96,10 @@ class Visit(BaseModel):
         if not visit_date:
             raise ValueError("Visit date is required")
         
+        # Ensure visit_date has timezone info
+        if visit_date.tzinfo is None:
+            visit_date = visit_date.replace(tzinfo=timezone.utc)
+        
         # Don't allow scheduling in the past (with 1 hour margin)
         now = datetime.now(timezone.utc)
         if visit_date < (now - timedelta(hours=1)):
