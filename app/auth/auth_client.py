@@ -77,53 +77,52 @@ class AuthClient:
             )
 
 
-    async def get_user_info(self, user_id: str) -> Optional[Dict[str, Any]]:
+    async def get_user_info(self, user_id: str, access_token: str) -> Optional[Dict[str, Any]]:
         """
         Get user information from auth service
         
         Args:
             user_id: User UUID
+            access_token: JWT token from the property owner making the request
             
         Returns:
-            User information dictionary or None if not found
+            User information dictionary or None if not found/unauthorized
             
         Note:
-            Currently the auth service doesn't have an endpoint to fetch user info by ID.
-            This would require an admin endpoint like GET /auth/admin/users/{user_id}
-            For now, returns None and the API will show only the user ID.
+            This calls GET /auth/admin/users/{user_id} which validates that:
+            - Property owners can only access users with visits/proposals on their properties
+            - Admins can access any user
+            - Regular users are blocked
         """
-        # TODO: Implement when auth service has admin endpoint for user lookup
-        # Expected endpoint: GET /auth/admin/users/{user_id}
-        # For now, return None to avoid errors
-        logger.warning(f"User info lookup not available - auth service needs admin endpoint")
-        return None
-        
-        # Future implementation when endpoint is available:
-        # try:
-        #     async with httpx.AsyncClient(timeout=self.timeout) as client:
-        #         response = await client.get(
-        #             f"{self.auth_service_url}/auth/admin/users/{user_id}",
-        #             # Would need admin authentication header
-        #         )
-        #         
-        #         if response.status_code == 200:
-        #             return response.json()
-        #         elif response.status_code == 404:
-        #             logger.warning(f"User {user_id} not found in auth service")
-        #             return None
-        #         else:
-        #             logger.error(f"Auth service returned status {response.status_code}")
-        #             return None
-        #             
-        # except httpx.TimeoutException:
-        #     logger.error("Timeout connecting to auth service")
-        #     return None
-        # except httpx.RequestError as e:
-        #     logger.error(f"Error connecting to auth service: {e}")
-        #     return None
-        # except Exception as e:
-        #     logger.error(f"Unexpected error fetching user info: {e}")
-        #     return None
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                response = await client.get(
+                    f"{self.auth_service_url}/auth/admin/users/{user_id}",
+                    cookies={"access_token": access_token}
+                )
+                
+                if response.status_code == 200:
+                    logger.debug(f"Successfully fetched user info for {user_id}")
+                    return response.json()
+                elif response.status_code == 404:
+                    logger.warning(f"User {user_id} not found in auth service")
+                    return None
+                elif response.status_code == 403:
+                    logger.warning(f"Access denied for user {user_id} (no relation)")
+                    return None
+                else:
+                    logger.error(f"Auth service returned status {response.status_code} for user {user_id}")
+                    return None
+                    
+        except httpx.TimeoutException:
+            logger.error(f"Timeout connecting to auth service for user {user_id}")
+            return None
+        except httpx.RequestError as e:
+            logger.error(f"Error connecting to auth service: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"Unexpected error fetching user info: {e}")
+            return None
 
 
 # Global auth client instance

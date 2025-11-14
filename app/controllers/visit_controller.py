@@ -1,5 +1,5 @@
 # app/controllers/visit_controller.py
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
 from sqlalchemy.orm import Session
 from typing import Optional
 import math
@@ -334,6 +334,7 @@ async def get_property_visits(
     summary="View All Visits for My Properties (Property Owners)"
 )
 async def get_my_properties_visits(
+    request: Request,
     page: int = Query(1, ge=1, description="Page number"),
     size: int = Query(10, ge=1, le=100, description="Items per page"),
     include_cancelled: bool = Query(False, description="Include cancelled visits"),
@@ -352,14 +353,19 @@ async def get_my_properties_visits(
     - `include_cancelled`: Include cancelled visits (default: false)
     - `include_completed`: Include completed visits (default: true)
     
-    **Returns:** Paginated list of visits with user IDs
+    **Returns:** Paginated list of visits with complete user details
     
-    **US21 Implementation:** This endpoint allows property owners to visualize all
-    scheduled visits for their properties along with visitor user IDs.
+    **US21 Implementation:** This endpoint allows property owners to view all
+    scheduled visits for their properties along with detailed visitor information:
+    - User ID
+    - Username
+    - Full Name
+    - Email
+    - Phone Number
     
-    **Note:** Full user details (name, email, phone) require an admin endpoint in the
-    auth service that doesn't currently exist. The API shows user IDs for now.
-    To enable full user details, the auth service needs: `GET /auth/admin/users/{user_id}`
+    **Security:** The auth service validates that property owners can only access
+    information of users who have scheduled visits or made proposals on their properties.
+    This is enforced via the internal validation endpoint in the properties API.
     """
     visit_service = VisitService(db)
     visits, total = visit_service.get_owner_visits(
@@ -372,10 +378,18 @@ async def get_my_properties_visits(
     
     total_pages = math.ceil(total / size) if total > 0 else 0
     
+    # Extract access token from cookies
+    access_token = request.cookies.get("access_token")
+    if not access_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Access token not found"
+        )
+    
     # Fetch user information for each visit
     visit_responses = []
     for visit in visits:
-        user_info = await auth_client.get_user_info(str(visit.idUser))
+        user_info = await auth_client.get_user_info(str(visit.idUser), access_token)
         visit_response = VisitWithUserResponse.from_visit(visit, user_info)
         visit_responses.append(visit_response)
     
