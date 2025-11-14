@@ -123,3 +123,17 @@ class FavoriteStatusResponse(BaseModel):
                 "is_favorited": True
             }
         }
+
+
+class FavoritesCountResponse(BaseModel):
+    """Response for user's favorites count (US08)"""
+    count: int
+    message: str
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "count": 5,
+                "message": "You have 5 favorite properties"
+            }
+        }

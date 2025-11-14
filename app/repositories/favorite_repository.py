@@ -72,6 +72,12 @@ class FavoriteRepository:
             .filter(Favorite.idProperty == property_id)\
             .count()
     
+    def count_by_user(self, user_id: UUID) -> int:
+        """Count how many favorites a user has (US08)"""
+        return self.db.query(Favorite)\
+            .filter(Favorite.idUser == user_id)\
+            .count()
+    
     def is_favorited(self, user_id: UUID, property_id: UUID) -> bool:
         """Check if user has favorited a property"""
         return self.get_by_user_and_property(user_id, property_id) is not None

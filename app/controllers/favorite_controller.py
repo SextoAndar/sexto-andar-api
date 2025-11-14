@@ -8,7 +8,8 @@ from app.services.favorite_service import FavoriteService
 from app.dtos.favorite_dto import (
     FavoriteResponse,
     FavoriteListResponse,
-    FavoriteStatusResponse
+    FavoriteStatusResponse,
+    FavoritesCountResponse
 )
 from app.auth.dependencies import get_current_user, AuthUser
 
@@ -182,4 +183,35 @@ async def check_favorite_status(
         message="Property is favorited" if is_favorited else "Property is not favorited",
         property_id=property_id,
         is_favorited=is_favorited
+    )
+
+
+@router.get(
+    "/count/total",
+    response_model=FavoritesCountResponse,
+    summary="Get Favorites Count (US08)"
+)
+async def get_favorites_count(
+    current_user: AuthUser = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get the total count of favorited properties for the current user.
+    
+    **Authentication required:** Any authenticated user
+    
+    **US08 Implementation:** Como usuário, quero ver a quantidade de imóveis 
+    favoritados no meu perfil.
+    
+    **Returns:** Count of favorited properties
+    
+    **Use case:** Display this count in the user's profile page or navigation menu
+    to show how many properties they have saved.
+    """
+    favorite_service = FavoriteService(db)
+    count = favorite_service.get_favorites_count(current_user.id)
+    
+    return FavoritesCountResponse(
+        count=count,
+        message=f"You have {count} favorite {'property' if count == 1 else 'properties'}"
     )

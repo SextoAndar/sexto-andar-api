@@ -85,3 +85,7 @@ class FavoriteService:
     def is_favorited(self, user_id: UUID, property_id: UUID) -> bool:
         """Check if property is favorited by user"""
         return self.repository.is_favorited(user_id, property_id)
+    
+    def get_favorites_count(self, user_id: UUID) -> int:
+        """Get count of user's favorite properties (US08)"""
+        return self.repository.count_by_user(user_id)
