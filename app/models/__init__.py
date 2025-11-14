@@ -10,6 +10,7 @@ from .property import Property
 from .address import Address
 from .visit import Visit
 from .proposal import Proposal
+from .favorite import Favorite
 
 # List of all models (useful for migrations and other scripts)
-__all__ = ["BaseModel", "Property", "Address", "Visit", "Proposal"]
+__all__ = ["BaseModel", "Property", "Address", "Visit", "Proposal", "Favorite"]
