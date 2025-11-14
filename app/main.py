@@ -26,6 +26,7 @@ from app.controllers.proposal_controller import router as proposal_router
 from app.controllers.internal_controller import router as internal_router
 from app.controllers.favorite_controller import router as favorite_router
 from app.controllers.admin_controller import router as admin_router
+from app.controllers.image_controller import router as image_router
 
 # Import API documentation configuration
 from app.config.api_docs import (
@@ -163,6 +164,9 @@ api_router.include_router(proposal_router, prefix="/proposals")
 
 # Favorite router
 api_router.include_router(favorite_router, prefix="/favorites")
+
+# Image router (property images management)
+api_router.include_router(image_router)
 
 # Admin router (admin-only endpoints)
 api_router.include_router(admin_router)

@@ -5,6 +5,8 @@ from datetime import datetime
 from decimal import Decimal
 import uuid
 
+from app.dtos.image_dto import ImageUploadRequest, ImageResponse
+
 
 class AddressRequest(BaseModel):
     """Address request DTO"""
@@ -60,6 +62,14 @@ class CreateHouseRequest(BaseModel):
     landPrice: Decimal = Field(..., gt=0, description="Land/terrain price")
     isSingleHouse: bool = Field(default=True, description="Is it a single house on the land?")
     
+    # Images (required: 1-15 images)
+    images: list[ImageUploadRequest] = Field(
+        ..., 
+        min_length=1, 
+        max_length=15, 
+        description="Property images (1-15 required)"
+    )
+    
     @field_validator('salesType')
     @classmethod
     def validate_sales_type(cls, v: str) -> str:
@@ -85,6 +95,14 @@ class CreateApartmentRequest(BaseModel):
     commonArea: bool = Field(default=False, description="Has common area?")
     floor: int = Field(..., ge=-10, le=200, description="Floor number")
     isPetAllowed: bool = Field(default=False, description="Allows pets?")
+    
+    # Images (required: 1-15 images)
+    images: list[ImageUploadRequest] = Field(
+        ..., 
+        min_length=1, 
+        max_length=15, 
+        description="Property images (1-15 required)"
+    )
     
     @field_validator('salesType')
     @classmethod
@@ -144,6 +162,7 @@ class PropertyResponse(BaseModel):
     is_active: bool
     created_at: datetime
     updated_at: datetime
+    images: list[ImageResponse] = Field(default=[], description="Property images")
     
     class Config:
         from_attributes = True

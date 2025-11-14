@@ -4,10 +4,13 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 import logging
 from decimal import Decimal
+import base64
 
 from app.models.property import Property, PropertyTypeEnum, SalesTypeEnum
 from app.models.address import Address
+from app.models.property_image import PropertyImage
 from app.repositories.property_repository import PropertyRepository
+from app.repositories.property_image_repository import PropertyImageRepository
 from app.dtos.property_dto import (
     CreateHouseRequest,
     CreateApartmentRequest,
@@ -15,6 +18,7 @@ from app.dtos.property_dto import (
     PropertyResponse,
     AddressResponse
 )
+from app.dtos.image_dto import ImageUploadRequest
 
 logger = logging.getLogger(__name__)
 
@@ -25,19 +29,26 @@ class PropertyService:
     def __init__(self, db: Session):
         self.db = db
         self.property_repo = PropertyRepository(db)
+        self.image_repo = PropertyImageRepository(db)
     
     def create_house(self, house_data: CreateHouseRequest, owner_id: str) -> Property:
         """
-        Create a new house property
+        Create a new house property with images
         
         Args:
-            house_data: House creation data
+            house_data: House creation data (includes 1-15 images)
             owner_id: Property owner ID from auth service
             
         Returns:
-            Created house property
+            Created house property with images
         """
         try:
+            # Validate image count
+            if not house_data.images or len(house_data.images) < 1:
+                raise ValueError("Property must have at least 1 image")
+            if len(house_data.images) > 15:
+                raise ValueError("Property cannot have more than 15 images")
+            
             # Create address
             address = Address(
                 street=house_data.address.street,
@@ -66,7 +77,11 @@ class PropertyService:
             )
             
             created_house = self.property_repo.create(house)
-            logger.info(f"House created successfully: {created_house.id} by owner {owner_id}")
+            
+            # Process and save images
+            self._process_images(created_house.id, house_data.images)
+            
+            logger.info(f"House created successfully with {len(house_data.images)} images: {created_house.id} by owner {owner_id}")
             
             return created_house
             
@@ -87,16 +102,22 @@ class PropertyService:
     
     def create_apartment(self, apartment_data: CreateApartmentRequest, owner_id: str) -> Property:
         """
-        Create a new apartment property
+        Create a new apartment property with images
         
         Args:
-            apartment_data: Apartment creation data
+            apartment_data: Apartment creation data (includes 1-15 images)
             owner_id: Property owner ID from auth service
             
         Returns:
-            Created apartment property
+            Created apartment property with images
         """
         try:
+            # Validate image count
+            if not apartment_data.images or len(apartment_data.images) < 1:
+                raise ValueError("Property must have at least 1 image")
+            if len(apartment_data.images) > 15:
+                raise ValueError("Property cannot have more than 15 images")
+            
             # Create address
             address = Address(
                 street=apartment_data.address.street,
@@ -125,7 +146,11 @@ class PropertyService:
             )
             
             created_apartment = self.property_repo.create(apartment)
-            logger.info(f"Apartment created successfully: {created_apartment.id} by owner {owner_id}")
+            
+            # Process and save images
+            self._process_images(created_apartment.id, apartment_data.images)
+            
+            logger.info(f"Apartment created successfully with {len(apartment_data.images)} images: {created_apartment.id} by owner {owner_id}")
             
             return created_apartment
             
@@ -432,3 +457,54 @@ class PropertyService:
             randomize=randomize,
             include_inactive=include_inactive
         )
+    
+    def _process_images(self, property_id: str, images: List[ImageUploadRequest]) -> List[PropertyImage]:
+        """
+        Process and save images for a property
+        
+        Args:
+            property_id: Property ID
+            images: List of image upload requests with base64 data
+            
+        Returns:
+            List of created PropertyImage objects
+        """
+        try:
+            property_images = []
+            
+            # Ensure at least one image is marked as primary
+            has_primary = any(img.is_primary for img in images)
+            if not has_primary and len(images) > 0:
+                images[0].is_primary = True  # Make first image primary by default
+            
+            for idx, img_request in enumerate(images, start=1):
+                # Decode base64 image data
+                try:
+                    image_bytes = base64.b64decode(img_request.image_data)
+                except Exception as e:
+                    raise ValueError(f"Invalid base64 image data for image {idx}: {str(e)}")
+                
+                # Create PropertyImage object
+                property_image = PropertyImage(
+                    property_id=property_id,
+                    image_data=image_bytes,
+                    content_type=img_request.content_type,
+                    file_size=len(image_bytes),
+                    display_order=img_request.display_order if img_request.display_order else idx,
+                    is_primary=img_request.is_primary
+                )
+                
+                property_images.append(property_image)
+            
+            # Save all images in batch
+            created_images = self.image_repo.create_many(property_images)
+            logger.info(f"Created {len(created_images)} images for property {property_id}")
+            
+            return created_images
+            
+        except Exception as e:
+            logger.error(f"Error processing images for property {property_id}: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Error processing images: {str(e)}"
+            )

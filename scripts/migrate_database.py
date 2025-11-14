@@ -101,8 +101,8 @@ def check_database_status():
         
         # Check if main tables exist
         # NOTE: 'accounts' table is NOT managed by this service - it's managed by sexto-andar-auth
-        # This service only manages: properties, addresses, visits, proposals
-        required_tables = ['properties', 'addresses', 'visits', 'proposals']
+        # This service only manages: properties, addresses, visits, proposals, property_images, favorites
+        required_tables = ['properties', 'addresses', 'visits', 'proposals', 'property_images', 'favorites']
         missing_tables = [table for table in required_tables if table not in tables]
         
         if missing_tables:

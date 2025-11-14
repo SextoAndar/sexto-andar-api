@@ -161,7 +161,31 @@ class Property(BaseModel):
         cascade="all, delete-orphan"
     )
     
+    # Relationship with Images (1:N)
+    images = relationship(
+        "PropertyImage",
+        back_populates="property",
+        cascade="all, delete-orphan",
+        order_by="PropertyImage.display_order"
+    )
+    
     # Validations
+    @validates('images')
+    def validate_images(self, key, images_list):
+        """Validate that property has between 1 and 15 images"""
+        if images_list is None:
+            return images_list
+        
+        image_count = len(images_list) if isinstance(images_list, list) else 0
+        
+        if image_count < 1:
+            raise ValueError("Property must have at least 1 image")
+        
+        if image_count > 15:
+            raise ValueError("Property cannot have more than 15 images")
+        
+        return images_list
+    
     @validates('propertySize')
     def validate_property_size(self, key, size):
         """Property size validation"""
