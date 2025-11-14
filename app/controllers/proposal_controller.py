@@ -1,5 +1,5 @@
 # app/controllers/proposal_controller.py
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
 from sqlalchemy.orm import Session
 from typing import Optional
 import math
@@ -10,9 +10,12 @@ from app.dtos.proposal_dto import (
     CreateProposalRequest,
     RespondProposalRequest,
     ProposalResponse,
-    ProposalListResponse
+    ProposalListResponse,
+    ProposalWithUserListResponse,
+    ProposalWithUserResponse
 )
 from app.auth.dependencies import get_current_user, get_current_property_owner, AuthUser
+from app.auth.auth_client import auth_client
 
 router = APIRouter(tags=["proposals"])
 
@@ -110,10 +113,11 @@ async def get_my_proposals(
 
 @router.get(
     "/received",
-    response_model=ProposalListResponse,
+    response_model=ProposalWithUserListResponse,
     summary="View Received Proposals (Property Owners)"
 )
 async def get_received_proposals(
+    request: Request,
     page: int = Query(1, ge=1, description="Page number"),
     size: int = Query(10, ge=1, le=100, description="Items per page"),
     status: Optional[str] = Query(None, description="Filter by status"),
@@ -121,7 +125,7 @@ async def get_received_proposals(
     db: Session = Depends(get_db)
 ):
     """
-    View all proposals received for your properties.
+    View all proposals received for your properties with detailed user information.
     
     **Authentication required:** Property Owner role
     
@@ -130,7 +134,19 @@ async def get_received_proposals(
     - `size`: Items per page (default: 10, max: 100)
     - `status`: Filter by proposal status
     
-    **Returns:** Paginated list of proposals for all your properties
+    **Returns:** Paginated list of proposals with complete user details (name, email, phone)
+    
+    **US20 Implementation:** This endpoint allows property owners to view all
+    proposals received for their properties along with detailed user information:
+    - User ID
+    - Username
+    - Full Name
+    - Email
+    - Phone Number
+    - Property Title and Address
+    
+    **Security:** The auth service validates that property owners can only access
+    information of users who have made proposals on their properties.
     """
     proposal_service = ProposalService(db)
     proposals, total = proposal_service.get_received_proposals(
@@ -142,8 +158,44 @@ async def get_received_proposals(
     
     total_pages = math.ceil(total / size) if total > 0 else 0
     
-    return ProposalListResponse(
-        proposals=[ProposalResponse.from_proposal(p) for p in proposals],
+    # Extract access token from cookies
+    access_token = request.cookies.get("access_token")
+    if not access_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Access token not found"
+        )
+    
+    # Fetch user information and property info for each proposal
+    proposal_responses = []
+    for proposal in proposals:
+        # Get user info from auth service
+        user_info = await auth_client.get_user_info(str(proposal.idUser), access_token)
+        
+        # Get property info from database
+        from app.models.property import Property
+        property_obj = db.query(Property).filter(Property.id == proposal.idProperty).first()
+        
+        property_info = None
+        if property_obj:
+            # Get address from relationship
+            address_str = f"{property_obj.address.street}, {property_obj.address.number} - {property_obj.address.city}" if property_obj.address else "Address not available"
+            
+            # Create title from property type and sales type
+            property_title = f"{property_obj.propertyType.value.title()} for {property_obj.salesType.value.title()}"
+            
+            property_info = {
+                "id": str(property_obj.id),
+                "title": property_title,
+                "address": address_str,
+                "propertyValue": property_obj.propertyValue
+            }
+        
+        proposal_response = ProposalWithUserResponse.from_proposal(proposal, user_info, property_info)
+        proposal_responses.append(proposal_response)
+    
+    return ProposalWithUserListResponse(
+        proposals=proposal_responses,
         total=total,
         page=page,
         size=size,
