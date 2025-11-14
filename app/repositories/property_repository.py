@@ -142,3 +142,46 @@ class PropertyRepository:
             .filter(Property.idPropertyOwner == owner_id, Property.is_active == True)
             .count()
         )
+    
+    def get_all_admin(
+        self,
+        page: int = 1,
+        size: int = 10,
+        randomize: bool = True,
+        include_inactive: bool = False
+    ) -> Tuple[List[Property], int]:
+        """
+        Get all properties for admin with optional randomization (US31)
+        
+        Args:
+            page: Page number
+            size: Items per page
+            randomize: Whether to shuffle results
+            include_inactive: Include deactivated properties
+            
+        Returns:
+            Tuple of (properties list, total count)
+        """
+        query = (
+            self.db.query(Property)
+            .options(joinedload(Property.address))
+        )
+        
+        # Filter by active status
+        if not include_inactive:
+            query = query.filter(Property.is_active == True)
+        
+        # Get total count before pagination
+        total = query.count()
+        
+        # Apply randomization if requested
+        if randomize:
+            query = query.order_by(func.random())
+        else:
+            query = query.order_by(Property.created_at.desc())
+        
+        # Apply pagination
+        offset = (page - 1) * size
+        properties = query.offset(offset).limit(size).all()
+        
+        return properties, total

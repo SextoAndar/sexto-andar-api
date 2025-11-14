@@ -25,6 +25,7 @@ from app.controllers.visit_controller import router as visit_router
 from app.controllers.proposal_controller import router as proposal_router
 from app.controllers.internal_controller import router as internal_router
 from app.controllers.favorite_controller import router as favorite_router
+from app.controllers.admin_controller import router as admin_router
 
 # Import API documentation configuration
 from app.config.api_docs import (
@@ -162,6 +163,9 @@ api_router.include_router(proposal_router, prefix="/proposals")
 
 # Favorite router
 api_router.include_router(favorite_router, prefix="/favorites")
+
+# Admin router (admin-only endpoints)
+api_router.include_router(admin_router)
 
 # Internal API router (inter-service communication)
 api_router.include_router(internal_router)

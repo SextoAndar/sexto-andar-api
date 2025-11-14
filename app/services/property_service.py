@@ -406,3 +406,29 @@ class PropertyService:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Error calculating portfolio statistics"
             )
+    
+    def get_all_properties_admin(
+        self,
+        page: int = 1,
+        size: int = 10,
+        randomize: bool = True,
+        include_inactive: bool = False
+    ) -> Tuple[List[Property], int]:
+        """
+        Get all properties in system for admin with optional randomization (US31)
+        
+        Args:
+            page: Page number
+            size: Items per page
+            randomize: Shuffle results for randomized order
+            include_inactive: Include deactivated properties
+            
+        Returns:
+            Tuple of (properties list, total count)
+        """
+        return self.property_repo.get_all_admin(
+            page=page,
+            size=size,
+            randomize=randomize,
+            include_inactive=include_inactive
+        )
