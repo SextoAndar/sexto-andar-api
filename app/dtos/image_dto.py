@@ -1,6 +1,7 @@
 # app/dtos/image_dto.py
-from pydantic import BaseModel, Field, field_validator
-from typing import Optional
+from pydantic import BaseModel, Field, field_validator, field_serializer
+from typing import Optional, Union
+from datetime import datetime
 import uuid
 import base64
 
@@ -41,16 +42,26 @@ class ImageUploadRequest(BaseModel):
 
 class ImageResponse(BaseModel):
     """Response DTO for image metadata"""
-    id: str
-    property_id: str
+    id: Union[str, uuid.UUID]
+    property_id: Union[str, uuid.UUID]
     content_type: str
     file_size: int
     display_order: int
     is_primary: bool
-    created_at: str
+    created_at: Union[str, datetime]
     
     class Config:
         from_attributes = True
+    
+    @field_serializer('id', 'property_id')
+    def serialize_uuid(self, value: Union[str, uuid.UUID]) -> str:
+        """Convert UUID to string for JSON serialization"""
+        return str(value) if isinstance(value, uuid.UUID) else value
+    
+    @field_serializer('created_at')
+    def serialize_datetime(self, value: Union[str, datetime]) -> str:
+        """Convert datetime to ISO string for JSON serialization"""
+        return value.isoformat() if isinstance(value, datetime) else value
     
     @classmethod
     def from_model(cls, image):

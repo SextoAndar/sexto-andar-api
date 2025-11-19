@@ -12,6 +12,7 @@ import os
 from datetime import datetime, timedelta
 from decimal import Decimal
 import random
+import base64
 from typing import Optional, Dict, List
 
 # Configuration
@@ -36,6 +37,17 @@ class DataSeeder:
         self.created_users = []
         self.created_properties = []
         self.tokens = {}
+        
+        # Minimal valid JPEG image (1x1 pixel) in base64
+        # Using different colored pixels for variety
+        self.sample_images = [
+            # Red pixel
+            "/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAABAAEDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlbaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD3+iiigD//2Q==",
+            # Blue pixel  
+            "/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCwAAAAA//Z",
+            # Green pixel
+            "/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAn/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCoAAAAA//Z",
+        ]
         
     def log(self, message: str, color: str = RESET):
         """Print colored log message"""
@@ -235,6 +247,18 @@ class DataSeeder:
         self.log_info(f"\nCreated/verified {success_count}/{len(all_users)} users")
         return success_count > 0
     
+    def get_sample_images(self, count: int = 1) -> List[Dict]:
+        """Get sample images for property creation"""
+        images = []
+        for i in range(min(count, len(self.sample_images))):
+            images.append({
+                "image_data": self.sample_images[i],
+                "content_type": "image/jpeg",
+                "display_order": i + 1,
+                "is_primary": i == 0  # First image is primary
+            })
+        return images
+    
     def seed_properties(self) -> bool:
         """Create fictional properties"""
         self.log(f"\n{BOLD}{'='*80}{RESET}")
@@ -255,7 +279,10 @@ class DataSeeder:
             
             owner["token"] = token
         
-        # Property data
+        self.log_info(f"Successfully logged in {sum(1 for o in owners if 'token' in o)}/{len(owners)} property owners")
+        
+        # Property data (now with images - required 1-15 images)
+        # Note: images will be added before creating each property
         houses = [
             {
                 "address": {
@@ -270,7 +297,8 @@ class DataSeeder:
                 "propertyValue": 450000.00,
                 "salesType": "sale",
                 "landPrice": 200000.00,
-                "isSingleHouse": True
+                "isSingleHouse": True,
+                "_image_count": 2  # Placeholder for image count
             },
             {
                 "address": {
@@ -285,7 +313,8 @@ class DataSeeder:
                 "propertyValue": 2500.00,
                 "salesType": "rent",
                 "landPrice": 150000.00,
-                "isSingleHouse": False
+                "isSingleHouse": False,
+                "_image_count": 1  # Placeholder for image count
             }
         ]
         
@@ -305,7 +334,8 @@ class DataSeeder:
                 "condominiumFee": 800.00,
                 "commonArea": True,
                 "floor": 15,
-                "isPetAllowed": True
+                "isPetAllowed": True,
+                "_image_count": 3  # Placeholder for image count
             },
             {
                 "address": {
@@ -322,7 +352,8 @@ class DataSeeder:
                 "condominiumFee": 1200.00,
                 "commonArea": True,
                 "floor": 20,
-                "isPetAllowed": False
+                "isPetAllowed": False,
+                "_image_count": 2  # Placeholder for image count
             },
             {
                 "address": {
@@ -339,14 +370,19 @@ class DataSeeder:
                 "condominiumFee": 400.00,
                 "commonArea": False,
                 "floor": 5,
-                "isPetAllowed": True
+                "isPetAllowed": True,
+                "_image_count": 1  # Placeholder for image count
             }
         ]
         
-        # Create properties
+        # Create properties (adding images before creation)
         for i, house in enumerate(houses):
             owner = owners[i % len(owners)]
             if "token" in owner:
+                # Add images to property data
+                image_count = house.pop("_image_count", 1)
+                house["images"] = self.get_sample_images(image_count)
+                self.log_info(f"House {i+1}: Added {len(house['images'])} images")
                 property_data = self.create_property(owner["token"], "house", house)
                 if property_data:
                     self.created_properties.append(property_data)
@@ -354,6 +390,10 @@ class DataSeeder:
         for i, apartment in enumerate(apartments):
             owner = owners[i % len(owners)]
             if "token" in owner:
+                # Add images to property data
+                image_count = apartment.pop("_image_count", 1)
+                apartment["images"] = self.get_sample_images(image_count)
+                self.log_info(f"Apartment {i+1}: Added {len(apartment['images'])} images")
                 property_data = self.create_property(owner["token"], "apartment", apartment)
                 if property_data:
                     self.created_properties.append(property_data)

@@ -17,7 +17,7 @@ class PropertyRepository:
         """Get property by ID with address"""
         return (
             self.db.query(Property)
-            .options(joinedload(Property.address))
+            .options(joinedload(Property.address), joinedload(Property.images))
             .filter(Property.id == property_id)
             .first()
         )
@@ -34,7 +34,7 @@ class PropertyRepository:
         """Get properties by owner with pagination and filters"""
         query = (
             self.db.query(Property)
-            .options(joinedload(Property.address))
+            .options(joinedload(Property.address), joinedload(Property.images))
             .filter(Property.idPropertyOwner == owner_id)
             .order_by(Property.created_at.desc())
         )
@@ -77,7 +77,8 @@ class PropertyRepository:
         """Get all properties with pagination and filters"""
         query = (
             self.db.query(Property)
-            .options(joinedload(Property.address))
+            .options(joinedload(Property.address), joinedload(Property.images))
+            .order_by(Property.created_at.desc())
         )
         
         # Apply filters
@@ -164,7 +165,7 @@ class PropertyRepository:
         """
         query = (
             self.db.query(Property)
-            .options(joinedload(Property.address))
+            .options(joinedload(Property.address), joinedload(Property.images))
         )
         
         # Filter by active status

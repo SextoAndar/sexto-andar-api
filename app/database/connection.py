@@ -32,7 +32,7 @@ engine = create_engine(
 )
 
 # Session maker
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine, expire_on_commit=False)
 
 # Base for models
 Base = declarative_base()
