@@ -353,10 +353,7 @@ async def get_my_properties_visits(
     - `include_cancelled`: Include cancelled visits (default: false)
     - `include_completed`: Include completed visits (default: true)
     
-    **Returns:** Paginated list of visits with complete user details
-    
-    **US21 Implementation:** This endpoint allows property owners to view all
-    scheduled visits for their properties along with detailed visitor information:
+    **Returns:** Paginated list of visits with complete user details including:
     - User ID
     - Username
     - Full Name

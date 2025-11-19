@@ -20,7 +20,7 @@ router = APIRouter(tags=["favorites"])
     "/{property_id}",
     response_model=FavoriteStatusResponse,
     status_code=status.HTTP_201_CREATED,
-    summary="Add Property to Favorites (US05)"
+    summary="Add Property to Favorites"
 )
 async def add_to_favorites(
     property_id: str,
@@ -30,10 +30,7 @@ async def add_to_favorites(
     """
     Add a property to your favorites list.
     
-    **Authentication required:** Any authenticated user
-    
-    **US05 Implementation:** Como usuário, quero favoritar imóveis para salvá-los 
-    em minha lista de interesse.
+    **Authentication required:** Authenticated user
     
     **Business rules:**
     - Property must exist and be active
@@ -63,7 +60,7 @@ async def add_to_favorites(
 @router.delete(
     "/{property_id}",
     response_model=FavoriteStatusResponse,
-    summary="Remove Property from Favorites (US06)"
+    summary="Remove Property from Favorites"
 )
 async def remove_from_favorites(
     property_id: str,
@@ -73,10 +70,7 @@ async def remove_from_favorites(
     """
     Remove a property from your favorites list.
     
-    **Authentication required:** Any authenticated user
-    
-    **US06 Implementation:** Como usuário, quero desfavoritar imóveis que 
-    não me interessam mais.
+    **Authentication required:** Authenticated user
     
     **Returns:** Confirmation message with property ID
     
@@ -99,7 +93,7 @@ async def remove_from_favorites(
 @router.get(
     "/",
     response_model=FavoriteListResponse,
-    summary="View My Favorite Properties (US07)"
+    summary="View My Favorite Properties"
 )
 async def get_my_favorites(
     page: int = Query(1, ge=1, description="Page number"),
@@ -111,10 +105,7 @@ async def get_my_favorites(
     """
     View all your favorite properties with pagination.
     
-    **Authentication required:** Any authenticated user
-    
-    **US07 Implementation:** Como usuário, quero visualizar meus imóveis favoritos 
-    e realizar ações rápidas (visita, proposta) sobre eles.
+    **Authentication required:** Authenticated user
     
     **Query Parameters:**
     - `page`: Page number (default: 1)
@@ -189,7 +180,7 @@ async def check_favorite_status(
 @router.get(
     "/count/total",
     response_model=FavoritesCountResponse,
-    summary="Get Favorites Count (US08)"
+    summary="Get Favorites Count"
 )
 async def get_favorites_count(
     current_user: AuthUser = Depends(get_current_user),
@@ -198,10 +189,7 @@ async def get_favorites_count(
     """
     Get the total count of favorited properties for the current user.
     
-    **Authentication required:** Any authenticated user
-    
-    **US08 Implementation:** Como usuário, quero ver a quantidade de imóveis 
-    favoritados no meu perfil.
+    **Authentication required:** Authenticated user
     
     **Returns:** Count of favorited properties
     

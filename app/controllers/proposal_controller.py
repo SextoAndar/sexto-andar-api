@@ -134,10 +134,7 @@ async def get_received_proposals(
     - `size`: Items per page (default: 10, max: 100)
     - `status`: Filter by proposal status
     
-    **Returns:** Paginated list of proposals with complete user details (name, email, phone)
-    
-    **US20 Implementation:** This endpoint allows property owners to view all
-    proposals received for their properties along with detailed user information:
+    **Returns:** Paginated list of proposals with complete user details including:
     - User ID
     - Username
     - Full Name

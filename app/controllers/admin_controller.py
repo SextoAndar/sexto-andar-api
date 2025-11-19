@@ -18,7 +18,7 @@ router = APIRouter(tags=["admin"], prefix="/admin")
 @router.get(
     "/properties",
     response_model=PropertyListResponse,
-    summary="View All Properties in System (Admin Only - US31)"
+    summary="View All Properties in System (Admin Only)"
 )
 async def get_all_properties_admin(
     page: int = Query(1, ge=1, description="Page number (starts at 1)"),
@@ -32,9 +32,6 @@ async def get_all_properties_admin(
     View all properties in the system with pagination and optional randomization.
     
     **Authentication required:** ADMIN role only
-    
-    **US31 Implementation:** Como administrador, quero visualizar todos os imóveis 
-    cadastrados no sistema (com embaralhamento e paginação).
     
     **Query Parameters:**
     - `page`: Page number (default: 1)

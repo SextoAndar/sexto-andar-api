@@ -21,7 +21,7 @@ This API validates JWT tokens by calling the external `sexto-andar-auth` service
 - Role-based access control: Managed by `sexto-andar-auth`
 
 ## User Roles (managed by sexto-andar-auth)
-- **USER**: Browse properties, schedule visits, make proposals
+- **USER**: Browse properties, schedule visits, make proposals, manage favorites
 - **PROPERTY_OWNER**: Manage properties and view proposals  
 - **ADMIN**: Full system access and user management
 
@@ -32,9 +32,18 @@ This API validates JWT tokens by calling the external `sexto-andar-auth` service
 - Input validation with Pydantic
 
 ## Core Features
-- Property listing CRUD operations
-- Visit scheduling system
-- Proposal management
+- **Property Management**: CRUD operations for houses and apartments
+- **Image Management**: Upload, download, and manage property images (1-15 per property)
+- **Visit Scheduling**: Schedule and manage property visits
+- **Proposal System**: Create and manage property proposals
+- **Favorites**: Save and organize favorite properties
+
+## Image Handling
+- Properties require **1-15 images** when created
+- Images stored as BYTEA in PostgreSQL
+- Images served via REST API endpoints
+- Supported formats: JPEG, PNG, WebP (max 5MB each)
+- Download images: `GET /api/images/{image_id}`
 
 ## Technical Stack
 - Framework: FastAPI with async/await support
@@ -55,9 +64,9 @@ This API validates JWT tokens by calling the external `sexto-andar-auth` service
   - Database: Shared PostgreSQL with this API
 
 ## Documentation
-- Interactive API docs: /docs (Swagger UI)
-- Alternative docs: /redoc (ReDoc)
-- OpenAPI schema: /openapi.json
+- Interactive API docs: /api/docs (Swagger UI)
+- Alternative docs: /api/redoc (ReDoc)
+- OpenAPI schema: /api/openapi.json
 """
 
 # Server Configuration for API docs
@@ -84,7 +93,11 @@ API_TAGS_METADATA = [
     },
     {
         "name": "properties",
-        "description": "Property management endpoints (CRUD operations)",
+        "description": "Property management endpoints (CRUD operations for houses and apartments)",
+    },
+    {
+        "name": "images",
+        "description": "Property image management (upload, download, delete, reorder images)",
     },
     {
         "name": "visits",
@@ -93,6 +106,14 @@ API_TAGS_METADATA = [
     {
         "name": "proposals",
         "description": "Property proposal management endpoints",
+    },
+    {
+        "name": "favorites",
+        "description": "User favorites management (add, remove, list favorite properties)",
+    },
+    {
+        "name": "admin",
+        "description": "Administrative endpoints (admin role required)",
     },
 ]
 
