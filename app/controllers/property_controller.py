@@ -102,6 +102,74 @@ async def create_apartment(
     return PropertyResponse.model_validate(apartment)
 
 
+
+@router.get(
+    "/owner/my-properties",
+    response_model=PropertyListResponse,
+    summary="View My Property Portfolio"
+)
+async def get_my_properties(
+    page: int = Query(1, ge=1, description="Page number (starts at 1)"),
+    size: int = Query(10, ge=1, le=100, description="Items per page (max 100)"),
+    property_type: Optional[str] = Query(None, description="Filter by type: 'HOUSE' or 'APARTMENT'"),
+    sales_type: Optional[str] = Query(None, description="Filter by sales type: 'RENT' or 'SALE'"),
+    active_only: bool = Query(True, description="Show only active properties"),
+    current_owner: AuthUser = Depends(get_current_property_owner),
+    db: Session = Depends(get_db)
+):
+    """
+    View and manage your complete property portfolio.
+    
+    **Authentication required:** Property Owner role
+    
+    Retrieve all properties you own with advanced filtering options to help
+    you track and organize your real estate portfolio effectively.
+    
+    **Query Parameters:**
+    - `page`: Page number (default: 1)
+    - `size`: Number of items per page (default: 10, max: 100)
+    - `property_type`: Filter by property type
+      - `HOUSE`: Show only your houses
+      - `APARTMENT`: Show only your apartments
+    - `sales_type`: Filter by sales type
+      - `RENT`: Show only rental properties
+      - `SALE`: Show only properties for sale
+    - `active_only`: Show only active properties (default: true)
+      - Set to `false` to include deactivated properties
+    
+    **Returns:** Paginated list with:
+    - `properties`: Array of your property objects
+    - `total`: Total number of your properties matching filters
+    - `page`: Current page number
+    - `size`: Items per page
+    - `total_pages`: Total number of pages
+    
+    **Common Use Cases:**
+    - View all properties: `GET /api/owner/my-properties`
+    - View rental portfolio: `GET /api/owner/my-properties?sales_type=RENT`
+    - View houses for sale: `GET /api/owner/my-properties?property_type=HOUSE&sales_type=SALE`
+    - Include deactivated: `GET /api/owner/my-properties?active_only=false`
+    """
+    property_service = PropertyService(db)
+    properties, total = property_service.get_properties_by_owner(
+        owner_id=current_owner.id,
+        page=page,
+        size=size,
+        property_type=property_type,
+        sales_type=sales_type,
+        active_only=active_only
+    )
+    
+    total_pages = math.ceil(total / size) if total > 0 else 0
+    
+    return PropertyListResponse(
+        properties=[PropertyResponse.model_validate(p) for p in properties],
+        total=total,
+        page=page,
+        size=size,
+        total_pages=total_pages
+    )
+
 @router.get(
     "/{property_id}",
     response_model=PropertyResponse,
