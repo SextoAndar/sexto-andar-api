@@ -16,7 +16,7 @@ import base64
 from typing import Optional, Dict, List
 
 # Configuration
-AUTH_SERVICE_URL = os.getenv("AUTH_SERVICE_URL", "http://sexto-andar-auth:8001")
+AUTH_SERVICE_URL = os.getenv("AUTH_SERVICE_URL", "http://localhost:8001")
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000/api")
 
 # Color codes for terminal output

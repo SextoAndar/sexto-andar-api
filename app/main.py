@@ -27,6 +27,7 @@ from app.controllers.internal_controller import router as internal_router
 from app.controllers.favorite_controller import router as favorite_router
 from app.controllers.admin_controller import router as admin_router
 from app.controllers.image_controller import router as image_router
+from app.controllers.auth_controller import router as auth_router
 
 # Import API documentation configuration
 from app.config.api_docs import (
@@ -155,26 +156,14 @@ async def health_check():
         raise HTTPException(status_code=503, detail="Service unavailable")
 
 # Include all API routes under the api_router
-# Property router
 api_router.include_router(property_router, prefix="/properties")
-
-# Visit router
 api_router.include_router(visit_router, prefix="/visits")
-
-# Proposal router
 api_router.include_router(proposal_router, prefix="/proposals")
-
-# Favorite router
 api_router.include_router(favorite_router, prefix="/favorites")
-
-# Image router (property images management)
 api_router.include_router(image_router)
-
-# Admin router (admin-only endpoints)
 api_router.include_router(admin_router)
-
-# Internal API router (inter-service communication)
 api_router.include_router(internal_router)
+api_router.include_router(auth_router)
 
 # Include the main API router in the app
 app.include_router(api_router)
