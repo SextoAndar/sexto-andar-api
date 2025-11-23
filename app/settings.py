@@ -15,9 +15,9 @@ class Settings:
     """
     
     # Base values (defaults)
-    _API_BASE_PATH: str = "/api"
+    _API_BASE_PATH: str = "/"
     _API_VERSION: str = "v1"
-    _ALLOW_ORIGINS: List[str] = ["http://localhost:5173", "http://127.0.0.1:5173"]
+    _ALLOW_ORIGINS: List[str] = ["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:9999", "http://0.0.0.0:9999"]
     _DEBUG: bool = False
     
     def __init__(self):

@@ -32,7 +32,7 @@ class AuthClient:
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 response = await client.post(
-                    f"{self.auth_service_url}/auth/introspect",
+                    f"{self.auth_service_url}/v1/auth/introspect",
                     json={"token": token}
                 )
                 
