@@ -120,8 +120,24 @@ def test_address_data():
     }
 
 
+import base64
+
 @pytest.fixture
-def test_house_data(test_address_data):
+def test_image_data():
+    # Create a minimalistic valid base64 encoded image (e.g., a 1x1 black pixel PNG)
+    # This is a valid PNG, just very small
+    png_data = base64.b64decode(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
+    )
+    
+    return {
+        "file_name": "test_image.png",
+        "content_type": "image/png",
+        "image_data": base64.b64encode(png_data).decode("utf-8")
+    }
+
+@pytest.fixture
+def test_house_data(test_address_data, test_image_data):
     """Sample house data for testing"""
     return {
         "address": test_address_data,
@@ -131,12 +147,13 @@ def test_house_data(test_address_data):
         "salesType": "sale",
         "isPetAllowed": True,
         "landPrice": "200000.00",
-        "isSingleHouse": True
+        "isSingleHouse": True,
+        "images": [test_image_data]  # Add mock image data
     }
 
 
 @pytest.fixture
-def test_apartment_data(test_address_data):
+def test_apartment_data(test_address_data, test_image_data):
     """Sample apartment data for testing"""
     return {
         "address": test_address_data,
@@ -147,7 +164,8 @@ def test_apartment_data(test_address_data):
         "isPetAllowed": False,
         "condominiumFee": "500.00",
         "commonArea": True,
-        "floor": 5
+        "floor": 5,
+        "images": [test_image_data]  # Add mock image data
     }
 
 
@@ -220,3 +238,4 @@ def created_property(db_session: Session, mock_auth_property_owner, test_house_d
     property_obj = property_service.create_house(house_request, mock_auth_property_owner.id)
     
     return property_obj
+

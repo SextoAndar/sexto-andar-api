@@ -94,7 +94,7 @@ class ProposalService:
                 detail="Property not found"
             )
         
-        if actual_owner_id != owner_id:
+        if str(actual_owner_id) != str(owner_id):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You can only view proposals for your own properties"
@@ -133,7 +133,7 @@ class ProposalService:
         
         # Check if user is the property owner
         actual_owner_id = self.repository.get_property_owner_id(proposal.idProperty)
-        if actual_owner_id != owner_id:
+        if str(actual_owner_id) != str(owner_id):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Only the property owner can accept proposals"
@@ -160,7 +160,7 @@ class ProposalService:
         
         # Check if user is the property owner
         actual_owner_id = self.repository.get_property_owner_id(proposal.idProperty)
-        if actual_owner_id != owner_id:
+        if str(actual_owner_id) != str(owner_id):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Only the property owner can reject proposals"
