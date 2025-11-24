@@ -43,11 +43,12 @@ class FavoriteResponse(BaseModel):
         property_dto = None
         if favorite.property:
             prop = favorite.property
-            # Get address
             address_str = None
             if prop.address:
                 address_str = f"{prop.address.street}, {prop.address.number} - {prop.address.city}"
-            
+            # Corrigir: buscar imagens do imóvel e converter para ImageResponse
+            from app.dtos.image_dto import ImageResponse
+            images = [ImageResponse.from_model(img) for img in getattr(prop, 'images', [])]
             property_dto = PropertyDetailsDTO(
                 id=prop.id,
                 propertyType=prop.propertyType.value,
@@ -59,9 +60,9 @@ class FavoriteResponse(BaseModel):
                 is_active=prop.is_active,
                 condominiumFee=prop.condominiumFee,
                 floor=prop.floor,
-                isPetAllowed=prop.isPetAllowed
+                isPetAllowed=prop.isPetAllowed,
+                images=images
             )
-        
         return cls(
             id=favorite.id,
             idUser=favorite.idUser,
@@ -85,6 +86,7 @@ class PropertyDetailsDTO(BaseModel):
     floor: Optional[int] = None
     isPetAllowed: bool
     
+    images: list = []
     class Config:
         from_attributes = True
 
