@@ -29,7 +29,7 @@ class ProposalService:
             )
         
         # Check if user is trying to make proposal on their own property
-        if owner_id == user_id:
+        if str(owner_id) == str(user_id):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="You cannot make a proposal on your own property"
@@ -185,7 +185,7 @@ class ProposalService:
         proposal = self.get_proposal_by_id(proposal_id)
         
         # Only the user who made the proposal can withdraw it
-        if proposal.idUser != user_id:
+        if str(proposal.idUser) != str(user_id):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You can only withdraw your own proposals"
