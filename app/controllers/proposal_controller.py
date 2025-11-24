@@ -239,12 +239,13 @@ async def get_proposal(
 
 
 @router.get(
-    "/property/{property_id}/proposals",
-    response_model=ProposalListResponse,
-    summary="Get Proposals for a Property"
+    "/property/{property_id}",
+    response_model=ProposalWithUserListResponse,
+    summary="Get Proposals for a Property (Property Owners)"
 )
 async def get_property_proposals(
     property_id: str,
+    request: Request,
     page: int = Query(1, ge=1, description="Page number"),
     size: int = Query(10, ge=1, le=100, description="Items per page"),
     status: Optional[str] = Query(None, description="Filter by status"),
@@ -252,16 +253,19 @@ async def get_property_proposals(
     db: Session = Depends(get_db)
 ):
     """
-    Get all proposals for a specific property.
+    Get all proposals for a specific property you own, with detailed user information.
     
     **Authentication required:** Property Owner (must own the property)
+    
+    **Path Parameters:**
+    - `property_id`: UUID of the property to view proposals for
     
     **Query Parameters:**
     - `page`: Page number
     - `size`: Items per page
     - `status`: Filter by proposal status
     
-    **Returns:** Paginated list of proposals for the property
+    **Returns:** Paginated list of proposals with complete user and property details
     """
     proposal_service = ProposalService(db)
     proposals, total = proposal_service.get_property_proposals(
@@ -274,8 +278,41 @@ async def get_property_proposals(
     
     total_pages = math.ceil(total / size) if total > 0 else 0
     
-    return ProposalListResponse(
-        proposals=[ProposalResponse.from_proposal(p) for p in proposals],
+    access_token = request.cookies.get("access_token")
+    if not access_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Access token not found"
+        )
+    
+    proposal_responses = []
+    for proposal in proposals:
+        user_info = await auth_client.get_user_info(str(proposal.idUser), access_token)
+        
+        # Get property info (already fetched in get_property_proposals service method, but need to format for DTO)
+        from app.models.property import Property
+        property_obj = db.query(Property).filter(Property.id == proposal.idProperty).first()
+        
+        property_info = None
+        if property_obj:
+            # Get address from relationship
+            address_str = f"{property_obj.address.street}, {property_obj.address.number} - {property_obj.address.city}" if property_obj.address else "Address not available"
+            
+            # Create title from property type and sales type
+            property_title = f"{property_obj.propertyType.value.title()} for {property_obj.salesType.value.title()}"
+            
+            property_info = {
+                "id": str(property_obj.id),
+                "title": property_title,
+                "address": address_str,
+                "propertyValue": property_obj.propertyValue
+            }
+        
+        proposal_response = ProposalWithUserResponse.from_proposal(proposal, user_info, property_info)
+        proposal_responses.append(proposal_response)
+    
+    return ProposalWithUserListResponse(
+        proposals=proposal_responses,
         total=total,
         page=page,
         size=size,

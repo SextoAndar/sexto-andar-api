@@ -130,7 +130,7 @@ class UserInfoDTO(BaseModel):
     username: str
     fullName: str
     email: str
-    phoneNumber: str
+    phoneNumber: Optional[str] = None
     
     class Config:
         json_schema_extra = {
@@ -230,7 +230,13 @@ class ProposalWithUserResponse(BaseModel):
             updated_at=proposal.updated_at,
             is_active=proposal.is_active(),
             days_until_expiry=proposal.days_until_expiry(),
-            user=UserInfoDTO(**user_info) if user_info else None,
+            user=UserInfoDTO(
+                id=UUID(user_info.get('id')),
+                username=user_info.get('username'),
+                fullName=user_info.get('fullName'),
+                email=user_info.get('email'),
+                phoneNumber=user_info.get('phoneNumber')
+            ) if user_info else None,
             property=PropertyInfoDTO(**property_info) if property_info else None
         )
 
