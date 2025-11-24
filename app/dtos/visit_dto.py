@@ -1,6 +1,6 @@
 # app/dtos/visit_dto.py
 from pydantic import BaseModel, Field, field_validator
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 from uuid import UUID
 
@@ -14,7 +14,7 @@ class CreateVisitRequest(BaseModel):
     @field_validator('visitDate')
     @classmethod
     def validate_visit_date(cls, v):
-        if v < datetime.now():
+        if v < datetime.now(timezone.utc):
             raise ValueError('Visit date must be in the future')
         return v
     
@@ -218,7 +218,7 @@ class VisitWithUserResponse(BaseModel):
         user_dto = None
         if user_info:
             user_dto = UserInfoDTO(
-                id=user_info.get('id'),
+                id=UUID(user_info.get('id')),
                 username=user_info.get('username'),
                 fullName=user_info.get('fullName'),
                 email=user_info.get('email'),

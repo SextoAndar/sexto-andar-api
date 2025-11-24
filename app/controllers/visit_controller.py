@@ -329,6 +329,76 @@ async def get_property_visits(
 
 
 @router.get(
+    "/property/{property_id}",
+    response_model=VisitWithUserListResponse,
+    summary="View Visits for a Specific Property (Property Owners)"
+)
+async def get_visits_for_property_by_owner(
+    property_id: str,
+    request: Request,
+    page: int = Query(1, ge=1, description="Page number"),
+    size: int = Query(10, ge=1, le=100, description="Items per page"),
+    include_cancelled: bool = Query(False, description="Include cancelled visits"),
+    include_completed: bool = Query(True, description="Include completed visits"),
+    current_owner: AuthUser = Depends(get_current_property_owner),
+    db: Session = Depends(get_db)
+):
+    """
+    View all visits scheduled for a specific property you own, with detailed user information.
+    
+    **Authentication required:** Property Owner role
+    
+    **Path Parameters:**
+    - `property_id`: UUID of the property to view visits for
+    
+    **Query Parameters:**
+    - `page`: Page number (default: 1)
+    - `size`: Items per page (default: 10, max: 100)
+    - `include_cancelled`: Include cancelled visits (default: false)
+    - `include_completed`: Include completed visits (default: true)
+    
+    **Returns:** Paginated list of visits with complete user details including:
+    - User ID
+    - Username
+    - Full Name
+    - Email
+    - Phone Number
+    """
+    visit_service = VisitService(db)
+    visits, total = visit_service.get_visits_for_owner_property(
+        property_id=property_id,
+        owner_id=current_owner.id,
+        page=page,
+        size=size,
+        include_cancelled=include_cancelled,
+        include_completed=include_completed
+    )
+    
+    total_pages = math.ceil(total / size) if total > 0 else 0
+    
+    access_token = request.cookies.get("access_token")
+    if not access_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Access token not found"
+        )
+    
+    visit_responses = []
+    for visit in visits:
+        user_info = await auth_client.get_user_info(str(visit.idUser), access_token)
+        visit_response = VisitWithUserResponse.from_visit(visit, user_info)
+        visit_responses.append(visit_response)
+    
+    return VisitWithUserListResponse(
+        visits=visit_responses,
+        total=total,
+        page=page,
+        size=size,
+        total_pages=total_pages
+    )
+
+
+@router.get(
     "/my-properties/visits",
     response_model=VisitWithUserListResponse,
     summary="View All Visits for My Properties (Property Owners)"

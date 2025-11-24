@@ -236,3 +236,38 @@ class VisitService:
             include_cancelled=include_cancelled,
             include_completed=include_completed
         )
+
+    def get_visits_for_owner_property(
+        self,
+        property_id: UUID,
+        owner_id: UUID,
+        page: int = 1,
+        size: int = 10,
+        include_cancelled: bool = False,
+        include_completed: bool = True
+    ) -> Tuple[List[Visit], int]:
+        """
+        Get all visits for a specific property, ensuring it belongs to the owner.
+        """
+        # First, check if the property exists and belongs to the owner
+        actual_owner_id = self.repository.get_property_owner_id(property_id)
+        if actual_owner_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Property not found"
+            )
+        
+        if str(actual_owner_id) != str(owner_id):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only view visits for your own properties"
+            )
+        
+        # Now retrieve the visits for this property
+        return self.repository.get_by_property(
+            property_id=property_id,
+            page=page,
+            size=size,
+            include_cancelled=include_cancelled,
+            include_completed=include_completed
+        )

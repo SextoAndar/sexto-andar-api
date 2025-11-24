@@ -58,13 +58,17 @@ class VisitRepository:
         property_id: UUID,
         page: int = 1,
         size: int = 10,
-        include_cancelled: bool = False
+        include_cancelled: bool = False,
+        include_completed: bool = True
     ) -> Tuple[List[Visit], int]:
         """Get all visits for a property with pagination"""
         query = self.db.query(Visit).filter(Visit.idProperty == property_id)
         
         if not include_cancelled:
             query = query.filter(Visit.cancelled == False)
+        
+        if not include_completed:
+            query = query.filter(Visit.isVisitCompleted == False)
         
         # Count total
         total = query.count()

@@ -97,7 +97,7 @@ class AuthClient:
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 response = await client.get(
-                    f"{self.auth_service_url}/auth/admin/users/{user_id}",
+                    f"{self.auth_service_url}/v1/auth/admin/users/{user_id}",
                     cookies={"access_token": access_token}
                 )
                 
