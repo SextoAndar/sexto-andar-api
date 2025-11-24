@@ -209,8 +209,7 @@ class ProposalService:
         """Delete a proposal (only by user who made it)"""
         proposal = self.get_proposal_by_id(proposal_id)
         
-        # Only the user who made the proposal can delete it
-        if proposal.idUser != user_id:
+        if str(proposal.idUser) != str(user_id):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You can only delete your own proposals"
