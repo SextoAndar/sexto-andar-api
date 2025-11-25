@@ -108,7 +108,14 @@ print(f"[CORS DEBUG] Loaded ALLOW_ORIGINS: {settings.ALLOW_ORIGINS}")
 logger.info(f"[CORS DEBUG] Loaded ALLOW_ORIGINS: {settings.ALLOW_ORIGINS}")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "https://sexto-andar-api-3ef30ad16a1f.herokuapp.com/",
+        "https://sexto-andar-auth-6def0cff0560.herokuapp.com/",
+        "https://sexto-andar-dev-proxy-d6d02970f88a.herokuapp.com/",
+        "https://sexto-andar-web-9a6357fcb391.herokuapp.com/"
+    ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allow_headers=["Content-Type", "Authorization", "Accept", "Origin", "X-Requested-With"],
