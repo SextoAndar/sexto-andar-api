@@ -34,15 +34,7 @@ class Settings:
         self.DEBUG: bool = os.getenv("DEBUG", "false").lower() in ("true", "1", "yes")
         
         # Remote authentication service - REQUIRED
-        self.AUTH_SERVICE_URL: str = os.getenv("AUTH_SERVICE_URL", "").strip()
-        
-        if not self.AUTH_SERVICE_URL:
-            raise ValueError(
-                "❌ AUTH_SERVICE_URL not configured!\n"
-                "This service delegates 100% of authentication to sexto-andar-auth.\n"
-                "Set the AUTH_SERVICE_URL environment variable.\n"
-                "Example: AUTH_SERVICE_URL=http://localhost:8001"
-            )
+        self.AUTH_SERVICE_URL: str = os.getenv("AUTH_SERVICE_URL", "https://sexto-andar-auth-6def0cff0560.herokuapp.com/").strip()
         
         # JWT Secret - must match auth service
         self.JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", "")
