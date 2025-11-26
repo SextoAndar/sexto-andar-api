@@ -1,7 +1,7 @@
 # app/repositories/property_repository.py
 from typing import Optional, List, Tuple
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import func
+from sqlalchemy import func, or_
 
 from app.models.property import Property, PropertyTypeEnum, SalesTypeEnum
 from app.models.address import Address
@@ -72,12 +72,14 @@ class PropertyRepository:
         size: int = 10,
         property_type: Optional[PropertyTypeEnum] = None,
         sales_type: Optional[SalesTypeEnum] = None,
+        search_term: Optional[str] = None,
         active_only: bool = True
     ) -> Tuple[List[Property], int]:
         """Get all properties with pagination and filters"""
         query = (
             self.db.query(Property)
             .options(joinedload(Property.address), joinedload(Property.images))
+            .join(Address, Property.address)
             .order_by(Property.created_at.desc())
         )
         
@@ -90,6 +92,17 @@ class PropertyRepository:
         
         if sales_type:
             query = query.filter(Property.salesType == sales_type)
+
+        if search_term:
+            search_pattern = f"%{search_term}%"
+            query = query.filter(
+                or_(
+                    Property.description.ilike(search_pattern),
+                    Address.street.ilike(search_pattern),
+                    Address.city.ilike(search_pattern),
+                    Address.country.ilike(search_pattern)
+                )
+            )
         
         # Get total count
         total = query.count()

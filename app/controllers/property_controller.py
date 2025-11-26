@@ -214,6 +214,7 @@ async def list_properties(
     size: int = Query(10, ge=1, le=100, description="Items per page (max 100)"),
     property_type: Optional[str] = Query(None, description="Filter by type: 'HOUSE' or 'APARTMENT'"),
     sales_type: Optional[str] = Query(None, description="Filter by sales type: 'RENT' or 'SALE'"),
+    search_term: Optional[str] = Query(None, description="Text search for property description and address"),
     active_only: bool = Query(True, description="Show only active properties"),
     db: Session = Depends(get_db)
 ):
@@ -231,6 +232,7 @@ async def list_properties(
     - `sales_type`: Filter by sales type
       - `RENT`: Only properties for rent
       - `SALE`: Only properties for sale
+    - `search_term`: Text search for property description and address
     - `active_only`: Show only active properties (default: true)
     
     **Returns:** Paginated list with:
@@ -244,6 +246,7 @@ async def list_properties(
     - All properties: `GET /api/properties`
     - Only houses: `GET /api/properties?property_type=HOUSE`
     - Houses for sale: `GET /api/properties?property_type=HOUSE&sales_type=SALE`
+    - Search for 'luxury': `GET /api/properties?search_term=luxury`
     - Page 2: `GET /api/properties?page=2&size=20`
     """
     property_service = PropertyService(db)
@@ -252,6 +255,7 @@ async def list_properties(
         size=size,
         property_type=property_type,
         sales_type=sales_type,
+        search_term=search_term,
         active_only=active_only
     )
     

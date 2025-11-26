@@ -217,6 +217,7 @@ class PropertyService:
         size: int = 10,
         property_type: Optional[str] = None,
         sales_type: Optional[str] = None,
+        search_term: Optional[str] = None,
         active_only: bool = True
     ) -> Tuple[List[Property], int]:
         """Get all properties with pagination and filters"""
@@ -229,6 +230,7 @@ class PropertyService:
             size=size,
             property_type=property_type_enum,
             sales_type=sales_type_enum,
+            search_term=search_term,
             active_only=active_only
         )
     
