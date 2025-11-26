@@ -7,7 +7,9 @@ from fastapi import HTTPException, status
 from typing import Optional, Tuple, List
 from datetime import datetime
 from uuid import UUID
+import logging # Added explicit import for logging
 
+logger = logging.getLogger(__name__) # Instantiated logger
 
 class VisitService:
     """Service for Visit business logic"""
@@ -21,31 +23,42 @@ class VisitService:
         user_id: UUID
     ) -> Visit:
         """Create a new visit"""
-        # Check if property exists
-        owner_id = self.repository.get_property_owner_id(visit_data.idProperty)
-        if owner_id is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Property not found"
+        try:
+            # Check if property exists
+            owner_id = self.repository.get_property_owner_id(visit_data.idProperty)
+            if owner_id is None:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Property not found"
+                )
+            
+            # Check for visit conflicts (optional - can allow multiple visits at same time)
+            # If you want to prevent conflicts, uncomment:
+            # if self.repository.check_visit_conflict(visit_data.idProperty, visit_data.visitDate):
+            #     raise HTTPException(
+            #         status_code=status.HTTP_409_CONFLICT,
+            #         detail="Another visit is already scheduled at this time"
+            #     )
+            
+            # Create visit
+            visit = Visit(
+                idProperty=visit_data.idProperty,
+                idUser=user_id,
+                visitDate=visit_data.visitDate,
+                notes=visit_data.notes
             )
-        
-        # Check for visit conflicts (optional - can allow multiple visits at same time)
-        # If you want to prevent conflicts, uncomment:
-        # if self.repository.check_visit_conflict(visit_data.idProperty, visit_data.visitDate):
-        #     raise HTTPException(
-        #         status_code=status.HTTP_409_CONFLICT,
-        #         detail="Another visit is already scheduled at this time"
-        #     )
-        
-        # Create visit
-        visit = Visit(
-            idProperty=visit_data.idProperty,
-            idUser=user_id,
-            visitDate=visit_data.visitDate,
-            notes=visit_data.notes
-        )
-        
-        return self.repository.create(visit)
+            
+            return self.repository.create(visit)
+        except HTTPException:
+            # Re-raise HTTPException directly as it's an expected error type
+            raise
+        except Exception as e:
+            # Log the unexpected error with traceback
+            logger.error(f"Unexpected error creating visit for user {user_id} and property {visit_data.idProperty}: {e}", exc_info=True)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Internal server error while creating visit: {str(e)}"
+            )
     
     def get_visit_by_id(self, visit_id: UUID) -> Visit:
         """Get visit by ID"""
