@@ -7,7 +7,8 @@ from fastapi import HTTPException, status
 from typing import Optional, Tuple, List
 from datetime import datetime
 from uuid import UUID
-import logging # Added explicit import for logging
+import logging
+import traceback # NEW import
 
 logger = logging.getLogger(__name__) # Instantiated logger
 
@@ -55,6 +56,8 @@ class VisitService:
         except Exception as e:
             # Log the unexpected error with traceback
             logger.error(f"Unexpected error creating visit for user {user_id} and property {visit_data.idProperty}: {e}", exc_info=True)
+            # Print the traceback directly to stderr/stdout for immediate visibility in Heroku logs
+            traceback.print_exc() # NEW line
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Internal server error while creating visit: {str(e)}"
