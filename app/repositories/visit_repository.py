@@ -147,6 +147,33 @@ class VisitRepository:
         property_obj = self.db.query(Property).filter(Property.id == property_id).first()
         return property_obj.idPropertyOwner if property_obj else None
     
+    def delete_all_visits_by_user_id(self, user_id: UUID) -> int:
+        """Delete all visit records permanently for a given user ID. Returns count of deleted visits."""
+        count = (
+            self.db.query(Visit)
+            .filter(Visit.idUser == user_id)
+            .delete(synchronize_session='fetch')
+        )
+        self.db.commit()
+        return count
+
+    def delete_all_visits_for_owner_properties(self, owner_id: UUID) -> int:
+        """Delete all visit records permanently for properties owned by a given owner ID. Returns count of deleted visits."""
+        # First, get the IDs of properties owned by this owner
+        property_ids_tuple = self.db.query(Property.id).filter(Property.idPropertyOwner == owner_id).all()
+        property_ids = [pid[0] for pid in property_ids_tuple] # Extract UUIDs from tuples
+
+        if not property_ids:
+            return 0
+        
+        count = (
+            self.db.query(Visit)
+            .filter(Visit.idProperty.in_(property_ids))
+            .delete(synchronize_session='fetch')
+        )
+        self.db.commit()
+        return count
+
     def get_by_owner(
         self,
         owner_id: UUID,

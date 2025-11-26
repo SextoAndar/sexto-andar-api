@@ -72,6 +72,16 @@ class FavoriteRepository:
             .filter(Favorite.idProperty == property_id)\
             .count()
     
+    def delete_all_favorites_by_user_id(self, user_id: UUID) -> int:
+        """Delete all favorite records permanently for a given user ID. Returns count of deleted favorites."""
+        count = (
+            self.db.query(Favorite)
+            .filter(Favorite.idUser == user_id)
+            .delete(synchronize_session='fetch')
+        )
+        self.db.commit()
+        return count
+
     def count_by_user(self, user_id: UUID) -> int:
         """Count how many favorites a user has (US08)"""
         return self.db.query(Favorite)\

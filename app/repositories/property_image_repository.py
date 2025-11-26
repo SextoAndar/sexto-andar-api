@@ -76,6 +76,19 @@ class PropertyImageRepository:
         self.db.commit()
         return count
     
+    def delete_images_by_property_ids(self, property_ids: List[str]) -> int:
+        """Delete all images permanently for a list of property IDs. Returns count of deleted images."""
+        if not property_ids:
+            return 0
+        
+        count = (
+            self.db.query(PropertyImage)
+            .filter(PropertyImage.property_id.in_(property_ids))
+            .delete(synchronize_session='fetch')
+        )
+        self.db.commit()
+        return count
+    
     def count_by_property(self, property_id: str) -> int:
         """Count images for a property"""
         return (

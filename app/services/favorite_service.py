@@ -86,6 +86,22 @@ class FavoriteService:
         """Check if property is favorited by user"""
         return self.repository.is_favorited(user_id, property_id)
     
+    def delete_all_user_favorites(self, user_id: UUID) -> int:
+        """
+        Deletes all favorite records permanently for a given user ID.
+        Returns the count of deleted favorites.
+        """
+        try:
+            deleted_count = self.repository.delete_all_favorites_by_user_id(user_id)
+            # logger.info(f"Deleted {deleted_count} favorites for user {user_id}.")
+            return deleted_count
+        except Exception as e:
+            # logger.error(f"Error deleting all favorites for user {user_id}: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error deleting user's favorites: {str(e)}"
+            )
+    
     def get_favorites_count(self, user_id: UUID) -> int:
         """Get count of user's favorite properties (US08)"""
         return self.repository.count_by_user(user_id)

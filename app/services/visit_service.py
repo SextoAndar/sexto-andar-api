@@ -220,6 +220,38 @@ class VisitService:
         
         self.repository.delete(visit)
     
+    def delete_all_user_visits(self, user_id: UUID) -> int:
+        """
+        Deletes all visit records permanently for a given user ID.
+        Returns the count of deleted visits.
+        """
+        try:
+            deleted_count = self.repository.delete_all_visits_by_user_id(user_id)
+            # logger.info(f"Deleted {deleted_count} visits for user {user_id}.")
+            return deleted_count
+        except Exception as e:
+            # logger.error(f"Error deleting all visits for user {user_id}: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error deleting user's visits: {str(e)}"
+            )
+
+    def delete_all_visits_for_owner_properties(self, owner_id: UUID) -> int:
+        """
+        Deletes all visit records permanently for properties owned by a given owner ID.
+        Returns the count of deleted visits.
+        """
+        try:
+            deleted_count = self.repository.delete_all_visits_for_owner_properties(owner_id)
+            # logger.info(f"Deleted {deleted_count} visits for properties of owner {owner_id}.")
+            return deleted_count
+        except Exception as e:
+            # logger.error(f"Error deleting all visits for properties of owner {owner_id}: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error deleting visits for owner's properties: {str(e)}"
+            )
+
     def get_owner_visits(
         self,
         owner_id: UUID,

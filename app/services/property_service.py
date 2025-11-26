@@ -371,6 +371,29 @@ class PropertyService:
                 detail="Error activating property"
             )
     
+    def delete_all_owner_properties_permanently(self, owner_id: str) -> None:
+        """
+        Deletes all properties permanently for a given owner ID,
+        and also deletes all associated images.
+        """
+        try:
+            # 1. Get IDs of properties to be deleted (and delete them)
+            deleted_property_ids = self.property_repo.delete_properties_by_owner_id(owner_id)
+            
+            # 2. Delete associated images using the collected property IDs
+            if deleted_property_ids:
+                deleted_images_count = self.image_repo.delete_images_by_property_ids(deleted_property_ids)
+                logger.info(f"Deleted {deleted_images_count} images for properties of owner {owner_id}.")
+            
+            logger.info(f"Successfully deleted {len(deleted_property_ids)} properties permanently for owner {owner_id}.")
+            
+        except Exception as e:
+            logger.error(f"Error deleting all properties permanently for owner {owner_id}: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error deleting owner's properties: {str(e)}"
+            )
+
     def get_portfolio_stats(self, owner_id: str) -> dict:
         """
         Get comprehensive portfolio statistics for property owner

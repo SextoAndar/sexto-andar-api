@@ -131,6 +131,21 @@ class PropertyRepository:
         self.db.delete(property_obj)
         self.db.commit()
     
+    def delete_properties_by_owner_id(self, owner_id: str) -> List[str]:
+        """
+        Deletes all properties permanently for a given owner ID
+        and returns the IDs of the deleted properties.
+        """
+        # Get IDs of properties to be deleted
+        property_ids_to_delete = self.db.query(Property.id).filter(Property.idPropertyOwner == owner_id).all()
+        property_ids_to_delete = [str(pid[0]) for pid in property_ids_to_delete] # Convert UUID to str
+        
+        # Perform deletion
+        self.db.query(Property).filter(Property.idPropertyOwner == owner_id).delete(synchronize_session='fetch')
+        self.db.commit()
+        
+        return property_ids_to_delete
+
     def deactivate(self, property_obj: Property) -> Property:
         """Deactivate property (soft delete)"""
         property_obj.is_active = False

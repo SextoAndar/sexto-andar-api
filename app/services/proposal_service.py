@@ -201,6 +201,38 @@ class ProposalService:
         
         return self.repository.update(proposal)
     
+    def delete_all_user_proposals(self, user_id: UUID) -> int:
+        """
+        Deletes all proposal records permanently for a given user ID.
+        Returns the count of deleted proposals.
+        """
+        try:
+            deleted_count = self.repository.delete_all_proposals_by_user_id(user_id)
+            # logger.info(f"Deleted {deleted_count} proposals for user {user_id}.")
+            return deleted_count
+        except Exception as e:
+            # logger.error(f"Error deleting all proposals for user {user_id}: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error deleting user's proposals: {str(e)}"
+            )
+
+    def delete_all_proposals_for_owner_properties(self, owner_id: UUID) -> int:
+        """
+        Deletes all proposal records permanently for properties owned by a given owner ID.
+        Returns the count of deleted proposals.
+        """
+        try:
+            deleted_count = self.repository.delete_all_proposals_for_owner_properties(owner_id)
+            # logger.info(f"Deleted {deleted_count} proposals for properties of owner {owner_id}.")
+            return deleted_count
+        except Exception as e:
+            # logger.error(f"Error deleting all proposals for properties of owner {owner_id}: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error deleting proposals for owner's properties: {str(e)}"
+            )
+
     def delete_proposal(
         self,
         proposal_id: UUID,
