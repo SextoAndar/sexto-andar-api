@@ -13,7 +13,15 @@ class CreateVisitRequest(BaseModel):
     
     @field_validator('visitDate')
     @classmethod
-    def validate_visit_date(cls, v):
+    def validate_visit_date(cls, v: datetime): # Add type hint for clarity
+        # Ensure 'v' is timezone-aware. If it's naive, assume UTC.
+        if v.tzinfo is None:
+            v = v.replace(tzinfo=timezone.utc)
+        elif v.tzinfo != timezone.utc:
+            # Convert to UTC if it's already aware but in a different timezone
+            v = v.astimezone(timezone.utc)
+
+        # Now compare the timezone-aware 'v' with timezone-aware 'now'
         if v < datetime.now(timezone.utc):
             raise ValueError('Visit date must be in the future')
         return v
