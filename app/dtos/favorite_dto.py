@@ -1,5 +1,5 @@
 # app/dtos/favorite_dto.py
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
 from uuid import UUID
@@ -8,14 +8,15 @@ from decimal import Decimal
 
 class FavoriteResponse(BaseModel):
     """Response model for favorite with property details"""
+
     id: UUID
     idUser: UUID
     idProperty: UUID
     created_at: datetime
-    
+
     # Property details
-    property: Optional['PropertyDetailsDTO'] = None
-    
+    property: Optional["PropertyDetailsDTO"] = None
+
     class Config:
         from_attributes = True
         json_schema_extra = {
@@ -32,11 +33,11 @@ class FavoriteResponse(BaseModel):
                     "propertySize": 85.0,
                     "description": "Beautiful apartment",
                     "address": "Main Street, 123 - São Paulo",
-                    "is_active": True
-                }
+                    "is_active": True,
+                },
             }
         }
-    
+
     @classmethod
     def from_favorite(cls, favorite):
         """Create response from Favorite model"""
@@ -48,7 +49,10 @@ class FavoriteResponse(BaseModel):
                 address_str = f"{prop.address.street}, {prop.address.number} - {prop.address.city}"
             # Corrigir: buscar imagens do imóvel e converter para ImageResponse
             from app.dtos.image_dto import ImageResponse
-            images = [ImageResponse.from_model(img) for img in getattr(prop, 'images', [])]
+
+            images = [
+                ImageResponse.from_model(img) for img in getattr(prop, "images", [])
+            ]
             property_dto = PropertyDetailsDTO(
                 id=prop.id,
                 propertyType=prop.propertyType.value,
@@ -61,19 +65,20 @@ class FavoriteResponse(BaseModel):
                 condominiumFee=prop.condominiumFee,
                 floor=prop.floor,
                 isPetAllowed=prop.isPetAllowed,
-                images=images
+                images=images,
             )
         return cls(
             id=favorite.id,
             idUser=favorite.idUser,
             idProperty=favorite.idProperty,
             created_at=favorite.created_at,
-            property=property_dto
+            property=property_dto,
         )
 
 
 class PropertyDetailsDTO(BaseModel):
     """Property details for favorite response"""
+
     id: UUID
     propertyType: str
     salesType: str
@@ -85,20 +90,22 @@ class PropertyDetailsDTO(BaseModel):
     condominiumFee: Optional[Decimal] = None
     floor: Optional[int] = None
     isPetAllowed: bool
-    
+
     images: list = []
+
     class Config:
         from_attributes = True
 
 
 class FavoriteListResponse(BaseModel):
     """Response model for paginated favorite list"""
+
     favorites: list[FavoriteResponse]
     total: int
     page: int
     size: int
     total_pages: int
-    
+
     class Config:
         json_schema_extra = {
             "example": {
@@ -106,36 +113,35 @@ class FavoriteListResponse(BaseModel):
                 "total": 10,
                 "page": 1,
                 "size": 10,
-                "total_pages": 1
+                "total_pages": 1,
             }
         }
 
 
 class FavoriteStatusResponse(BaseModel):
     """Response for favorite/unfavorite actions"""
+
     message: str
     property_id: UUID
     is_favorited: bool
-    
+
     class Config:
         json_schema_extra = {
             "example": {
                 "message": "Property added to favorites",
                 "property_id": "123e4567-e89b-12d3-a456-426614174000",
-                "is_favorited": True
+                "is_favorited": True,
             }
         }
 
 
 class FavoritesCountResponse(BaseModel):
     """Response for user's favorites count (US08)"""
+
     count: int
     message: str
-    
+
     class Config:
         json_schema_extra = {
-            "example": {
-                "count": 5,
-                "message": "You have 5 favorite properties"
-            }
+            "example": {"count": 5, "message": "You have 5 favorite properties"}
         }

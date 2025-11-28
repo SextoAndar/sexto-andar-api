@@ -9,158 +9,168 @@ from uuid import UUID
 
 class ProposalRepository:
     """Repository for Proposal database operations"""
-    
+
     def __init__(self, db: Session):
         self.db = db
-    
+
     def create(self, proposal: Proposal) -> Proposal:
         """Create a new proposal"""
         self.db.add(proposal)
         self.db.commit()
         self.db.refresh(proposal)
         return proposal
-    
+
     def get_by_id(self, proposal_id: UUID) -> Optional[Proposal]:
         """Get proposal by ID"""
         return self.db.query(Proposal).filter(Proposal.id == proposal_id).first()
-    
+
     def get_by_user(
-        self,
-        user_id: UUID,
-        page: int = 1,
-        size: int = 10,
-        status: Optional[str] = None
+        self, user_id: UUID, page: int = 1, size: int = 10, status: Optional[str] = None
     ) -> Tuple[List[Proposal], int]:
         """Get all proposals made by a user with pagination"""
         query = self.db.query(Proposal).filter(Proposal.idUser == user_id)
-        
+
         if status:
             try:
                 status_enum = ProposalStatusEnum(status)
                 query = query.filter(Proposal.status == status_enum)
             except ValueError:
                 pass  # Invalid status, ignore filter
-        
+
         # Count total
         total = query.count()
-        
+
         # Apply pagination and ordering
-        proposals = query.order_by(desc(Proposal.proposalDate))\
-            .offset((page - 1) * size)\
-            .limit(size)\
+        proposals = (
+            query.order_by(desc(Proposal.proposalDate))
+            .offset((page - 1) * size)
+            .limit(size)
             .all()
-        
+        )
+
         return proposals, total
-    
+
     def get_by_property(
         self,
         property_id: UUID,
         page: int = 1,
         size: int = 10,
-        status: Optional[str] = None
+        status: Optional[str] = None,
     ) -> Tuple[List[Proposal], int]:
         """Get all proposals for a property with pagination"""
         query = self.db.query(Proposal).filter(Proposal.idProperty == property_id)
-        
+
         if status:
             try:
                 status_enum = ProposalStatusEnum(status)
                 query = query.filter(Proposal.status == status_enum)
             except ValueError:
                 pass
-        
+
         # Count total
         total = query.count()
-        
+
         # Apply pagination and ordering
-        proposals = query.order_by(desc(Proposal.proposalDate))\
-            .offset((page - 1) * size)\
-            .limit(size)\
+        proposals = (
+            query.order_by(desc(Proposal.proposalDate))
+            .offset((page - 1) * size)
+            .limit(size)
             .all()
-        
+        )
+
         return proposals, total
-    
+
     def get_by_property_owner(
         self,
         owner_id: UUID,
         page: int = 1,
         size: int = 10,
-        status: Optional[str] = None
+        status: Optional[str] = None,
     ) -> Tuple[List[Proposal], int]:
         """Get all proposals for properties owned by a user"""
-        query = self.db.query(Proposal)\
-            .join(Property, Proposal.idProperty == Property.id)\
+        query = (
+            self.db.query(Proposal)
+            .join(Property, Proposal.idProperty == Property.id)
             .filter(Property.idPropertyOwner == owner_id)
-        
+        )
+
         if status:
             try:
                 status_enum = ProposalStatusEnum(status)
                 query = query.filter(Proposal.status == status_enum)
             except ValueError:
                 pass
-        
+
         # Count total
         total = query.count()
-        
+
         # Apply pagination and ordering
-        proposals = query.order_by(desc(Proposal.proposalDate))\
-            .offset((page - 1) * size)\
-            .limit(size)\
+        proposals = (
+            query.order_by(desc(Proposal.proposalDate))
+            .offset((page - 1) * size)
+            .limit(size)
             .all()
-        
+        )
+
         return proposals, total
-    
+
     def get_pending_by_property(self, property_id: UUID) -> List[Proposal]:
         """Get all pending proposals for a property"""
-        return self.db.query(Proposal)\
+        return (
+            self.db.query(Proposal)
             .filter(
                 and_(
                     Proposal.idProperty == property_id,
-                    Proposal.status == ProposalStatusEnum.PENDING
+                    Proposal.status == ProposalStatusEnum.PENDING,
                 )
-            )\
-            .order_by(desc(Proposal.proposalDate))\
-            .all()
-    
-    def check_duplicate_proposal(
-        self,
-        user_id: UUID,
-        property_id: UUID
-    ) -> bool:
-        """Check if user already has a pending proposal for this property"""
-        existing = self.db.query(Proposal).filter(
-            and_(
-                Proposal.idUser == user_id,
-                Proposal.idProperty == property_id,
-                Proposal.status == ProposalStatusEnum.PENDING
             )
-        ).first()
-        
+            .order_by(desc(Proposal.proposalDate))
+            .all()
+        )
+
+    def check_duplicate_proposal(self, user_id: UUID, property_id: UUID) -> bool:
+        """Check if user already has a pending proposal for this property"""
+        existing = (
+            self.db.query(Proposal)
+            .filter(
+                and_(
+                    Proposal.idUser == user_id,
+                    Proposal.idProperty == property_id,
+                    Proposal.status == ProposalStatusEnum.PENDING,
+                )
+            )
+            .first()
+        )
+
         return existing is not None
-    
+
     def update(self, proposal: Proposal) -> Proposal:
         """Update proposal"""
         self.db.commit()
         self.db.refresh(proposal)
         return proposal
-    
+
     def delete(self, proposal: Proposal) -> None:
         """Delete proposal (hard delete)"""
         self.db.delete(proposal)
         self.db.commit()
-    
+
     def delete_by_property_id(self, property_id: str) -> int:
         """Delete all proposals for a given property ID and return the count."""
-        num_deleted = self.db.query(Proposal).filter(Proposal.idProperty == property_id).delete(synchronize_session=False)
+        num_deleted = (
+            self.db.query(Proposal)
+            .filter(Proposal.idProperty == property_id)
+            .delete(synchronize_session=False)
+        )
         self.db.commit()
         return num_deleted
-    
+
     def delete_all_proposals_by_user_id(self, user_id: UUID) -> int:
         """Delete all proposal records permanently for a given user ID. Returns count of deleted proposals."""
         count = (
             self.db.query(Proposal)
             .filter(Proposal.idUser == user_id)
-            .delete(synchronize_session='fetch')
+            .delete(synchronize_session="fetch")
         )
         self.db.commit()
         return count
@@ -168,21 +178,29 @@ class ProposalRepository:
     def delete_all_proposals_for_owner_properties(self, owner_id: UUID) -> int:
         """Delete all proposal records permanently for properties owned by a given owner ID. Returns count of deleted proposals."""
         # First, get the IDs of properties owned by this owner
-        property_ids_tuple = self.db.query(Property.id).filter(Property.idPropertyOwner == owner_id).all()
-        property_ids = [pid[0] for pid in property_ids_tuple] # Extract UUIDs from tuples
+        property_ids_tuple = (
+            self.db.query(Property.id)
+            .filter(Property.idPropertyOwner == owner_id)
+            .all()
+        )
+        property_ids = [
+            pid[0] for pid in property_ids_tuple
+        ]  # Extract UUIDs from tuples
 
         if not property_ids:
             return 0
-        
+
         count = (
             self.db.query(Proposal)
             .filter(Proposal.idProperty.in_(property_ids))
-            .delete(synchronize_session='fetch')
+            .delete(synchronize_session="fetch")
         )
         self.db.commit()
         return count
 
     def get_property_owner_id(self, property_id: UUID) -> Optional[UUID]:
         """Get the owner ID of a property"""
-        property_obj = self.db.query(Property).filter(Property.id == property_id).first()
+        property_obj = (
+            self.db.query(Property).filter(Property.id == property_id).first()
+        )
         return property_obj.idPropertyOwner if property_obj else None

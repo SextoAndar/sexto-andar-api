@@ -7,13 +7,14 @@ from uuid import UUID
 
 class CreateVisitRequest(BaseModel):
     """Request model for creating a new visit"""
+
     idProperty: UUID = Field(..., description="Property ID to visit")
     visitDate: datetime = Field(..., description="Desired visit date and time")
     notes: Optional[str] = Field(None, max_length=500, description="Additional notes")
-    
-    @field_validator('visitDate')
+
+    @field_validator("visitDate")
     @classmethod
-    def validate_visit_date(cls, v: datetime): # Add type hint for clarity
+    def validate_visit_date(cls, v: datetime):  # Add type hint for clarity
         # Ensure 'v' is timezone-aware. If it's naive, assume UTC.
         if v.tzinfo is None:
             v = v.replace(tzinfo=timezone.utc)
@@ -23,37 +24,41 @@ class CreateVisitRequest(BaseModel):
 
         # Now compare the timezone-aware 'v' with timezone-aware 'now'
         if v < datetime.now(timezone.utc):
-            raise ValueError('Visit date must be in the future')
+            raise ValueError("Visit date must be in the future")
         return v
-    
+
     class Config:
         json_schema_extra = {
             "example": {
                 "idProperty": "123e4567-e89b-12d3-a456-426614174000",
                 "visitDate": "2024-12-20T14:00:00",
-                "notes": "Interested in the kitchen and backyard"
+                "notes": "Interested in the kitchen and backyard",
             }
         }
 
 
 class UpdateVisitRequest(BaseModel):
     """Request model for updating a visit"""
+
     visitDate: Optional[datetime] = Field(None, description="New visit date and time")
     notes: Optional[str] = Field(None, max_length=500, description="Updated notes")
-    
+
     class Config:
         json_schema_extra = {
             "example": {
                 "visitDate": "2024-12-21T15:00:00",
-                "notes": "Updated: Prefer afternoon visits"
+                "notes": "Updated: Prefer afternoon visits",
             }
         }
 
 
 class CompleteVisitRequest(BaseModel):
     """Request model for marking visit as completed"""
-    notes: Optional[str] = Field(None, max_length=500, description="Visit completion notes")
-    
+
+    notes: Optional[str] = Field(
+        None, max_length=500, description="Visit completion notes"
+    )
+
     class Config:
         json_schema_extra = {
             "example": {
@@ -64,18 +69,18 @@ class CompleteVisitRequest(BaseModel):
 
 class CancelVisitRequest(BaseModel):
     """Request model for cancelling a visit"""
-    cancellation_reason: Optional[str] = Field(None, max_length=200, description="Reason for cancellation")
-    
+
+    cancellation_reason: Optional[str] = Field(
+        None, max_length=200, description="Reason for cancellation"
+    )
+
     class Config:
-        json_schema_extra = {
-            "example": {
-                "cancellation_reason": "Schedule conflict"
-            }
-        }
+        json_schema_extra = {"example": {"cancellation_reason": "Schedule conflict"}}
 
 
 class VisitResponse(BaseModel):
     """Response model for visit details"""
+
     id: UUID
     idProperty: UUID
     idUser: UUID
@@ -86,10 +91,10 @@ class VisitResponse(BaseModel):
     cancellation_reason: Optional[str] = None
     created_at: datetime
     updated_at: datetime
-    
+
     # Computed fields
     status: str = Field(description="Visit status display")
-    
+
     class Config:
         from_attributes = True
         json_schema_extra = {
@@ -104,10 +109,10 @@ class VisitResponse(BaseModel):
                 "cancellation_reason": None,
                 "created_at": "2024-12-01T10:00:00",
                 "updated_at": "2024-12-01T10:00:00",
-                "status": "Scheduled"
+                "status": "Scheduled",
             }
         }
-    
+
     @classmethod
     def from_visit(cls, visit):
         """Create response from Visit model"""
@@ -122,18 +127,19 @@ class VisitResponse(BaseModel):
             cancellation_reason=visit.cancellation_reason,
             created_at=visit.created_at,
             updated_at=visit.updated_at,
-            status=visit.get_status_display()
+            status=visit.get_status_display(),
         )
 
 
 class VisitListResponse(BaseModel):
     """Response model for paginated visit list"""
+
     visits: list[VisitResponse]
     total: int
     page: int
     size: int
     total_pages: int
-    
+
     class Config:
         json_schema_extra = {
             "example": {
@@ -141,19 +147,20 @@ class VisitListResponse(BaseModel):
                 "total": 50,
                 "page": 1,
                 "size": 10,
-                "total_pages": 5
+                "total_pages": 5,
             }
         }
 
 
 class UserInfoDTO(BaseModel):
     """User information from auth service"""
+
     id: UUID
     username: str
     fullName: str
     email: str
     phoneNumber: Optional[str] = None
-    
+
     class Config:
         json_schema_extra = {
             "example": {
@@ -161,13 +168,14 @@ class UserInfoDTO(BaseModel):
                 "username": "johndoe",
                 "fullName": "John Doe",
                 "email": "john@example.com",
-                "phoneNumber": "+5511999999999"
+                "phoneNumber": "+5511999999999",
             }
         }
 
 
 class VisitWithUserResponse(BaseModel):
     """Response model for visit details with user information"""
+
     id: UUID
     idProperty: UUID
     idUser: UUID
@@ -179,13 +187,17 @@ class VisitWithUserResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     status: str = Field(description="Visit status display")
-    
+
     # User information
-    user: Optional[UserInfoDTO] = Field(None, description="User who scheduled the visit")
-    
+    user: Optional[UserInfoDTO] = Field(
+        None, description="User who scheduled the visit"
+    )
+
     # Property information
-    propertyAddress: Optional[str] = Field(None, description="Property address for reference")
-    
+    propertyAddress: Optional[str] = Field(
+        None, description="Property address for reference"
+    )
+
     class Config:
         from_attributes = True
         json_schema_extra = {
@@ -206,33 +218,33 @@ class VisitWithUserResponse(BaseModel):
                     "username": "johndoe",
                     "fullName": "John Doe",
                     "email": "john@example.com",
-                    "phoneNumber": "+5511999999999"
+                    "phoneNumber": "+5511999999999",
                 },
-                "propertyAddress": "123 Main St, Apt 4B"
+                "propertyAddress": "123 Main St, Apt 4B",
             }
         }
-    
+
     @classmethod
     def from_visit(cls, visit, user_info: Optional[dict] = None):
         """Create response from Visit model with optional user info"""
         # Get property address if available
         property_address = None
-        if hasattr(visit, 'property') and visit.property:
-            if hasattr(visit.property, 'address') and visit.property.address:
+        if hasattr(visit, "property") and visit.property:
+            if hasattr(visit.property, "address") and visit.property.address:
                 addr = visit.property.address
                 property_address = f"{addr.street}, {addr.number} - {addr.city}"
-        
+
         # Parse user info
         user_dto = None
         if user_info:
             user_dto = UserInfoDTO(
-                id=UUID(user_info.get('id')),
-                username=user_info.get('username'),
-                fullName=user_info.get('fullName'),
-                email=user_info.get('email'),
-                phoneNumber=user_info.get('phoneNumber')
+                id=UUID(user_info.get("id")),
+                username=user_info.get("username"),
+                fullName=user_info.get("fullName"),
+                email=user_info.get("email"),
+                phoneNumber=user_info.get("phoneNumber"),
             )
-        
+
         return cls(
             id=visit.id,
             idProperty=visit.idProperty,
@@ -246,18 +258,19 @@ class VisitWithUserResponse(BaseModel):
             updated_at=visit.updated_at,
             status=visit.get_status_display(),
             user=user_dto,
-            propertyAddress=property_address
+            propertyAddress=property_address,
         )
 
 
 class VisitWithUserListResponse(BaseModel):
     """Response model for paginated visit list with user information"""
+
     visits: list[VisitWithUserResponse]
     total: int
     page: int
     size: int
     total_pages: int
-    
+
     class Config:
         json_schema_extra = {
             "example": {
@@ -265,6 +278,6 @@ class VisitWithUserListResponse(BaseModel):
                 "total": 50,
                 "page": 1,
                 "size": 10,
-                "total_pages": 5
+                "total_pages": 5,
             }
         }

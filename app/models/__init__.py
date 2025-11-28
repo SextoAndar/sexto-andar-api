@@ -14,4 +14,12 @@ from .favorite import Favorite
 from .property_image import PropertyImage
 
 # List of all models (useful for migrations and other scripts)
-__all__ = ["BaseModel", "Property", "Address", "Visit", "Proposal", "Favorite", "PropertyImage"]
+__all__ = [
+    "BaseModel",
+    "Property",
+    "Address",
+    "Visit",
+    "Proposal",
+    "Favorite",
+    "PropertyImage",
+]

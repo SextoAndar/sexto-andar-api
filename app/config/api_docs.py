@@ -71,18 +71,9 @@ This API validates JWT tokens by calling the external `sexto-andar-auth` service
 
 # Server Configuration for API docs
 API_SERVERS = [
-    {
-        "url": "http://localhost:8000",
-        "description": "Development server"
-    },
-    {
-        "url": "http://localhost:8000",
-        "description": "Docker container"
-    },
-    {
-        "url": "https://api.sextoandar.com",
-        "description": "Production server"
-    }
+    {"url": "http://localhost:8000", "description": "Development server"},
+    {"url": "http://localhost:8000", "description": "Docker container"},
+    {"url": "https://api.sextoandar.com", "description": "Production server"},
 ]
 
 # API Tags for endpoint grouping

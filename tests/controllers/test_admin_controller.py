@@ -2,7 +2,6 @@
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from uuid import uuid4
-import pytest
 from datetime import datetime, timedelta
 from decimal import Decimal
 
@@ -20,14 +19,13 @@ def test_permanently_delete_property_as_admin(
     authenticated_admin: dict,
     mock_auth_property_owner: dict,
     mock_auth_user: dict,
-    test_house_data: dict
+    test_house_data: dict,
 ):
     """
     Test that an admin can permanently delete a property and all its related data.
     """
     # ARRANGE
     client = authenticated_admin["client"]
-    admin_user = authenticated_admin["admin"]
     owner_user = mock_auth_property_owner
     regular_user = mock_auth_user
 
@@ -45,7 +43,7 @@ def test_permanently_delete_property_as_admin(
         idUser=regular_user.id,
         visitDate=datetime.utcnow() + timedelta(days=5),
         isVisitCompleted=False,
-        cancelled=False
+        cancelled=False,
     )
     db_session.add(visit)
 
@@ -55,26 +53,39 @@ def test_permanently_delete_property_as_admin(
         idProperty=property_id,
         idUser=regular_user.id,
         status=ProposalStatusEnum.PENDING,
-        proposalValue=created_prop.propertyValue * Decimal('0.95')
+        proposalValue=created_prop.propertyValue * Decimal("0.95"),
     )
     db_session.add(proposal)
 
     # Favorite
-    favorite = Favorite(
-        id=uuid4(),
-        idProperty=property_id,
-        idUser=regular_user.id
-    )
+    favorite = Favorite(id=uuid4(), idProperty=property_id, idUser=regular_user.id)
     db_session.add(favorite)
     db_session.commit()
 
     # Verify everything exists before deletion
-    assert db_session.query(Property).filter(Property.id == property_id).first() is not None
-    assert db_session.query(Visit).filter(Visit.idProperty == property_id).first() is not None
-    assert db_session.query(Proposal).filter(Proposal.idProperty == property_id).first() is not None
-    assert db_session.query(Favorite).filter(Favorite.idProperty == property_id).first() is not None
-    assert db_session.query(PropertyImage).filter(PropertyImage.property_id == property_id).first() is not None
-    
+    assert (
+        db_session.query(Property).filter(Property.id == property_id).first()
+        is not None
+    )
+    assert (
+        db_session.query(Visit).filter(Visit.idProperty == property_id).first()
+        is not None
+    )
+    assert (
+        db_session.query(Proposal).filter(Proposal.idProperty == property_id).first()
+        is not None
+    )
+    assert (
+        db_session.query(Favorite).filter(Favorite.idProperty == property_id).first()
+        is not None
+    )
+    assert (
+        db_session.query(PropertyImage)
+        .filter(PropertyImage.property_id == property_id)
+        .first()
+        is not None
+    )
+
     # ACT
     response = client.delete(f"/api/admin/properties/{property_id}/permanent")
 
@@ -82,12 +93,27 @@ def test_permanently_delete_property_as_admin(
     assert response.status_code == 204
 
     # Verify that the property and all related data are gone
-    db_session.expire_all() # Ensure fresh data is loaded from db
-    assert db_session.query(Property).filter(Property.id == property_id).first() is None, "Property should be deleted"
-    assert db_session.query(Visit).filter(Visit.idProperty == property_id).first() is None, "Visits should be deleted"
-    assert db_session.query(Proposal).filter(Proposal.idProperty == property_id).first() is None, "Proposals should be deleted"
-    assert db_session.query(Favorite).filter(Favorite.idProperty == property_id).first() is None, "Favorites should be deleted"
-    assert db_session.query(PropertyImage).filter(PropertyImage.property_id == property_id).count() == 0, "Images should be deleted"
+    db_session.expire_all()  # Ensure fresh data is loaded from db
+    assert (
+        db_session.query(Property).filter(Property.id == property_id).first() is None
+    ), "Property should be deleted"
+    assert (
+        db_session.query(Visit).filter(Visit.idProperty == property_id).first() is None
+    ), "Visits should be deleted"
+    assert (
+        db_session.query(Proposal).filter(Proposal.idProperty == property_id).first()
+        is None
+    ), "Proposals should be deleted"
+    assert (
+        db_session.query(Favorite).filter(Favorite.idProperty == property_id).first()
+        is None
+    ), "Favorites should be deleted"
+    assert (
+        db_session.query(PropertyImage)
+        .filter(PropertyImage.property_id == property_id)
+        .count()
+        == 0
+    ), "Images should be deleted"
 
 
 def test_permanently_delete_property_as_non_admin(
@@ -105,4 +131,4 @@ def test_permanently_delete_property_as_non_admin(
     response = client.delete(f"/api/admin/properties/{property_id}/permanent")
 
     # ASSERT
-    assert response.status_code == 403 # Forbidden
+    assert response.status_code == 403  # Forbidden

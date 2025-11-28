@@ -9,10 +9,10 @@ from app.models.address import Address
 
 class PropertyRepository:
     """Repository for Property operations"""
-    
+
     def __init__(self, db: Session):
         self.db = db
-    
+
     def get_by_id(self, property_id: str) -> Optional[Property]:
         """Get property by ID with address"""
         return (
@@ -21,15 +21,15 @@ class PropertyRepository:
             .filter(Property.id == property_id)
             .first()
         )
-    
+
     def get_by_owner(
-        self, 
-        owner_id: str, 
-        page: int = 1, 
+        self,
+        owner_id: str,
+        page: int = 1,
         size: int = 10,
         property_type: Optional[str] = None,
         sales_type: Optional[str] = None,
-        active_only: bool = True
+        active_only: bool = True,
     ) -> Tuple[List[Property], int]:
         """Get properties by owner with pagination and filters"""
         query = (
@@ -38,10 +38,10 @@ class PropertyRepository:
             .filter(Property.idPropertyOwner == owner_id)
             .order_by(Property.created_at.desc())
         )
-        
+
         # Apply filters
         if active_only:
-            query = query.filter(Property.is_active == True)
+            query = query.filter(Property.is_active)
         
         if property_type:
             try:
@@ -49,31 +49,31 @@ class PropertyRepository:
                 query = query.filter(Property.propertyType == prop_type_enum)
             except ValueError:
                 pass  # Ignore invalid property type
-        
+
         if sales_type:
             try:
                 sales_type_enum = SalesTypeEnum(sales_type.upper())
                 query = query.filter(Property.salesType == sales_type_enum)
             except ValueError:
                 pass  # Ignore invalid sales type
-        
+
         # Get total count
         total = query.count()
-        
+
         # Get paginated results
         offset = (page - 1) * size
         properties = query.offset(offset).limit(size).all()
-        
+
         return properties, total
-    
+
     def get_all_paginated(
-        self, 
-        page: int = 1, 
+        self,
+        page: int = 1,
         size: int = 10,
         property_type: Optional[PropertyTypeEnum] = None,
         sales_type: Optional[SalesTypeEnum] = None,
         search_term: Optional[str] = None,
-        active_only: bool = True
+        active_only: bool = True,
     ) -> Tuple[List[Property], int]:
         """Get all properties with pagination and filters"""
         query = (
@@ -82,14 +82,14 @@ class PropertyRepository:
             .join(Address, Property.address)
             .order_by(Property.created_at.desc())
         )
-        
+
         # Apply filters
         if active_only:
-            query = query.filter(Property.is_active == True)
-        
+            query = query.filter(Property.is_active)
+
         if property_type:
             query = query.filter(Property.propertyType == property_type)
-        
+
         if sales_type:
             query = query.filter(Property.salesType == sales_type)
 
@@ -100,32 +100,32 @@ class PropertyRepository:
                     Property.description.ilike(search_pattern),
                     Address.street.ilike(search_pattern),
                     Address.city.ilike(search_pattern),
-                    Address.country.ilike(search_pattern)
+                    Address.country.ilike(search_pattern),
                 )
             )
-        
+
         # Get total count
         total = query.count()
-        
+
         # Get paginated results
         offset = (page - 1) * size
         properties = query.offset(offset).limit(size).all()
-        
+
         return properties, total
-    
+
     def create(self, property_obj: Property) -> Property:
         """Create new property"""
         self.db.add(property_obj)
         self.db.commit()
         self.db.refresh(property_obj)
         return property_obj
-    
+
     def update(self, property_obj: Property) -> Property:
         """Update existing property"""
         self.db.commit()
         self.db.refresh(property_obj)
         return property_obj
-    
+
     def delete(self, property_obj: Property) -> None:
         """Delete property (hard delete)"""
         self.db.delete(property_obj)
@@ -133,89 +133,96 @@ class PropertyRepository:
 
     def delete_permanently(self, property_id: str) -> None:
         """Permanently delete a property by its ID."""
-        self.db.query(Property).filter(Property.id == property_id).delete(synchronize_session=False)
+        self.db.query(Property).filter(Property.id == property_id).delete(
+            synchronize_session=False
+        )
         self.db.commit()
-    
+
     def delete_properties_by_owner_id(self, owner_id: str) -> List[str]:
         """
         Deletes all properties permanently for a given owner ID
         and returns the IDs of the deleted properties.
         """
         # Get IDs of properties to be deleted
-        property_ids_to_delete = self.db.query(Property.id).filter(Property.idPropertyOwner == owner_id).all()
-        property_ids_to_delete = [str(pid[0]) for pid in property_ids_to_delete] # Convert UUID to str
-        
+        property_ids_to_delete = (
+            self.db.query(Property.id)
+            .filter(Property.idPropertyOwner == owner_id)
+            .all()
+        )
+        property_ids_to_delete = [
+            str(pid[0]) for pid in property_ids_to_delete
+        ]  # Convert UUID to str
+
         # Perform deletion
-        self.db.query(Property).filter(Property.idPropertyOwner == owner_id).delete(synchronize_session='fetch')
+        self.db.query(Property).filter(Property.idPropertyOwner == owner_id).delete(
+            synchronize_session="fetch"
+        )
         self.db.commit()
-        
+
         return property_ids_to_delete
 
     def deactivate(self, property_obj: Property) -> Property:
         """Deactivate property (soft delete)"""
         property_obj.is_active = False
         return self.update(property_obj)
-    
+
     def activate(self, property_obj: Property) -> Property:
         """Activate property"""
         property_obj.is_active = True
         return self.update(property_obj)
-    
+
     def count_by_owner(self, owner_id: str) -> int:
         """Count total properties by owner"""
         return (
-            self.db.query(Property)
-            .filter(Property.idPropertyOwner == owner_id)
-            .count()
+            self.db.query(Property).filter(Property.idPropertyOwner == owner_id).count()
         )
-    
+
     def count_active_by_owner(self, owner_id: str) -> int:
         """Count active properties by owner"""
         return (
             self.db.query(Property)
-            .filter(Property.idPropertyOwner == owner_id, Property.is_active == True)
+            .filter(Property.idPropertyOwner == owner_id, Property.is_active)
             .count()
         )
-    
+
     def get_all_admin(
         self,
         page: int = 1,
         size: int = 10,
         randomize: bool = True,
-        include_inactive: bool = False
+        include_inactive: bool = False,
     ) -> Tuple[List[Property], int]:
         """
         Get all properties for admin with optional randomization (US31)
-        
+
         Args:
             page: Page number
             size: Items per page
             randomize: Whether to shuffle results
             include_inactive: Include deactivated properties
-            
+
         Returns:
             Tuple of (properties list, total count)
         """
-        query = (
-            self.db.query(Property)
-            .options(joinedload(Property.address), joinedload(Property.images))
+        query = self.db.query(Property).options(
+            joinedload(Property.address), joinedload(Property.images)
         )
-        
+
         # Filter by active status
         if not include_inactive:
-            query = query.filter(Property.is_active == True)
-        
+            query = query.filter(Property.is_active)
+
         # Get total count before pagination
         total = query.count()
-        
+
         # Apply randomization if requested
         if randomize:
             query = query.order_by(func.random())
         else:
             query = query.order_by(Property.created_at.desc())
-        
+
         # Apply pagination
         offset = (page - 1) * size
         properties = query.offset(offset).limit(size).all()
-        
+
         return properties, total

@@ -5,34 +5,29 @@ from app.repositories.visit_repository import VisitRepository
 from app.dtos.visit_dto import CreateVisitRequest, UpdateVisitRequest
 from fastapi import HTTPException, status
 from typing import Optional, Tuple, List
-from datetime import datetime
 from uuid import UUID
 import logging
-import traceback # NEW import
+import traceback  # NEW import
 
-logger = logging.getLogger(__name__) # Instantiated logger
+logger = logging.getLogger(__name__)  # Instantiated logger
+
 
 class VisitService:
     """Service for Visit business logic"""
-    
+
     def __init__(self, db: Session):
         self.repository = VisitRepository(db)
-    
-    def create_visit(
-        self,
-        visit_data: CreateVisitRequest,
-        user_id: UUID
-    ) -> Visit:
+
+    def create_visit(self, visit_data: CreateVisitRequest, user_id: UUID) -> Visit:
         """Create a new visit"""
         try:
             # Check if property exists
             owner_id = self.repository.get_property_owner_id(visit_data.idProperty)
             if owner_id is None:
                 raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Property not found"
+                    status_code=status.HTTP_404_NOT_FOUND, detail="Property not found"
                 )
-            
+
             # Check for visit conflicts (optional - can allow multiple visits at same time)
             # If you want to prevent conflicts, uncomment:
             # if self.repository.check_visit_conflict(visit_data.idProperty, visit_data.visitDate):
@@ -40,46 +35,48 @@ class VisitService:
             #         status_code=status.HTTP_409_CONFLICT,
             #         detail="Another visit is already scheduled at this time"
             #     )
-            
+
             # Create visit
             visit = Visit(
                 idProperty=visit_data.idProperty,
                 idUser=user_id,
                 visitDate=visit_data.visitDate,
-                notes=visit_data.notes
+                notes=visit_data.notes,
             )
-            
+
             return self.repository.create(visit)
         except HTTPException:
             # Re-raise HTTPException directly as it's an expected error type
             raise
         except Exception as e:
             # Log the unexpected error with traceback
-            logger.error(f"Unexpected error creating visit for user {user_id} and property {visit_data.idProperty}: {e}", exc_info=True)
+            logger.error(
+                f"Unexpected error creating visit for user {user_id} and property {visit_data.idProperty}: {e}",
+                exc_info=True,
+            )
             # Print the traceback directly to stderr/stdout for immediate visibility in Heroku logs
-            traceback.print_exc() # NEW line
+            traceback.print_exc()  # NEW line
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Internal server error while creating visit: {str(e)}"
+                detail=f"Internal server error while creating visit: {str(e)}",
             )
-    
+
     def get_visit_by_id(self, visit_id: UUID) -> Visit:
         """Get visit by ID"""
         visit = self.repository.get_by_id(visit_id)
         if not visit:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Visit not found"
+                status_code=status.HTTP_404_NOT_FOUND, detail="Visit not found"
             )
         return visit
-    
+
     def get_user_visits(
         self,
         user_id: UUID,
         page: int = 1,
         size: int = 10,
         include_cancelled: bool = False,
-        include_completed: bool = True
+        include_completed: bool = True,
     ) -> Tuple[List[Visit], int]:
         """Get all visits for a user"""
         return self.repository.get_by_user(
@@ -87,155 +84,133 @@ class VisitService:
             page=page,
             size=size,
             include_cancelled=include_cancelled,
-            include_completed=include_completed
+            include_completed=include_completed,
         )
-    
+
     def get_property_visits(
         self,
         property_id: UUID,
         page: int = 1,
         size: int = 10,
-        include_cancelled: bool = False
+        include_cancelled: bool = False,
     ) -> Tuple[List[Visit], int]:
         """Get all visits for a property"""
         # Check if property exists
         owner_id = self.repository.get_property_owner_id(property_id)
         if owner_id is None:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Property not found"
+                status_code=status.HTTP_404_NOT_FOUND, detail="Property not found"
             )
-        
+
         return self.repository.get_by_property(
             property_id=property_id,
             page=page,
             size=size,
-            include_cancelled=include_cancelled
+            include_cancelled=include_cancelled,
         )
-    
+
     def get_upcoming_visits_by_user(self, user_id: UUID) -> List[Visit]:
         """Get upcoming visits for a user"""
         return self.repository.get_upcoming_by_user(user_id)
-    
+
     def update_visit(
-        self,
-        visit_id: UUID,
-        update_data: UpdateVisitRequest,
-        user_id: UUID
+        self, visit_id: UUID, update_data: UpdateVisitRequest, user_id: UUID
     ) -> Visit:
         """Update a visit (reschedule or update notes)"""
         visit = self.get_visit_by_id(visit_id)
-        
+
         # Only the user who created the visit can update it
         if visit.idUser != user_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="You can only update your own visits"
+                detail="You can only update your own visits",
             )
-        
+
         # Check if visit can be updated
         if visit.isVisitCompleted:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Cannot update completed visit"
+                detail="Cannot update completed visit",
             )
-        
+
         if visit.cancelled:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Cannot update cancelled visit"
+                detail="Cannot update cancelled visit",
             )
-        
+
         # Update fields
         if update_data.visitDate:
             # Check for conflicts if rescheduling
             if update_data.visitDate != visit.visitDate:
                 if self.repository.check_visit_conflict(
-                    visit.idProperty,
-                    update_data.visitDate,
-                    exclude_visit_id=visit_id
+                    visit.idProperty, update_data.visitDate, exclude_visit_id=visit_id
                 ):
                     raise HTTPException(
                         status_code=status.HTTP_409_CONFLICT,
-                        detail="Another visit is already scheduled at this time"
+                        detail="Another visit is already scheduled at this time",
                     )
-            
+
             visit.reschedule(update_data.visitDate)
-        
+
         if update_data.notes is not None:
             visit.notes = update_data.notes
-        
+
         return self.repository.update(visit)
-    
+
     def complete_visit(
-        self,
-        visit_id: UUID,
-        user_id: UUID,
-        notes: Optional[str] = None
+        self, visit_id: UUID, user_id: UUID, notes: Optional[str] = None
     ) -> Visit:
         """Mark visit as completed"""
         visit = self.get_visit_by_id(visit_id)
-        
+
         # Only the user who created the visit can complete it
         if visit.idUser != user_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="You can only complete your own visits"
+                detail="You can only complete your own visits",
             )
-        
+
         try:
             visit.complete_visit(notes)
         except ValueError as e:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=str(e)
-            )
-        
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
         return self.repository.update(visit)
-    
+
     def cancel_visit(
-        self,
-        visit_id: UUID,
-        user_id: UUID,
-        cancellation_reason: Optional[str] = None
+        self, visit_id: UUID, user_id: UUID, cancellation_reason: Optional[str] = None
     ) -> Visit:
         """Cancel a visit"""
         visit = self.get_visit_by_id(visit_id)
-        
+
         # Only the user who created the visit can cancel it
         if visit.idUser != user_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="You can only cancel your own visits"
+                detail="You can only cancel your own visits",
             )
-        
+
         try:
             visit.cancel_visit(cancellation_reason)
         except ValueError as e:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=str(e)
-            )
-        
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
         return self.repository.update(visit)
-    
-    def delete_visit(
-        self,
-        visit_id: UUID,
-        user_id: UUID
-    ) -> None:
+
+    def delete_visit(self, visit_id: UUID, user_id: UUID) -> None:
         """Delete a visit"""
         visit = self.get_visit_by_id(visit_id)
-        
+
         # Only the user who created the visit can delete it
         if visit.idUser != user_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="You can only delete your own visits"
+                detail="You can only delete your own visits",
             )
-        
+
         self.repository.delete(visit)
-    
+
     def delete_all_user_visits(self, user_id: UUID) -> int:
         """
         Deletes all visit records permanently for a given user ID.
@@ -249,7 +224,7 @@ class VisitService:
             # logger.error(f"Error deleting all visits for user {user_id}: {e}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Error deleting user's visits: {str(e)}"
+                detail=f"Error deleting user's visits: {str(e)}",
             )
 
     def delete_all_visits_for_owner_properties(self, owner_id: UUID) -> int:
@@ -258,14 +233,16 @@ class VisitService:
         Returns the count of deleted visits.
         """
         try:
-            deleted_count = self.repository.delete_all_visits_for_owner_properties(owner_id)
+            deleted_count = self.repository.delete_all_visits_for_owner_properties(
+                owner_id
+            )
             # logger.info(f"Deleted {deleted_count} visits for properties of owner {owner_id}.")
             return deleted_count
         except Exception as e:
             # logger.error(f"Error deleting all visits for properties of owner {owner_id}: {e}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Error deleting visits for owner's properties: {str(e)}"
+                detail=f"Error deleting visits for owner's properties: {str(e)}",
             )
 
     def get_owner_visits(
@@ -274,7 +251,7 @@ class VisitService:
         page: int = 1,
         size: int = 10,
         include_cancelled: bool = False,
-        include_completed: bool = True
+        include_completed: bool = True,
     ) -> Tuple[List[Visit], int]:
         """Get all visits for properties owned by a specific owner"""
         return self.repository.get_by_owner(
@@ -282,7 +259,7 @@ class VisitService:
             page=page,
             size=size,
             include_cancelled=include_cancelled,
-            include_completed=include_completed
+            include_completed=include_completed,
         )
 
     def get_visits_for_owner_property(
@@ -292,7 +269,7 @@ class VisitService:
         page: int = 1,
         size: int = 10,
         include_cancelled: bool = False,
-        include_completed: bool = True
+        include_completed: bool = True,
     ) -> Tuple[List[Visit], int]:
         """
         Get all visits for a specific property, ensuring it belongs to the owner.
@@ -301,21 +278,20 @@ class VisitService:
         actual_owner_id = self.repository.get_property_owner_id(property_id)
         if actual_owner_id is None:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Property not found"
+                status_code=status.HTTP_404_NOT_FOUND, detail="Property not found"
             )
-        
+
         if str(actual_owner_id) != str(owner_id):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="You can only view visits for your own properties"
+                detail="You can only view visits for your own properties",
             )
-        
+
         # Now retrieve the visits for this property
         return self.repository.get_by_property(
             property_id=property_id,
             page=page,
             size=size,
             include_cancelled=include_cancelled,
-            include_completed=include_completed
+            include_completed=include_completed,
         )

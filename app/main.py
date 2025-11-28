@@ -10,14 +10,9 @@ from fastapi import FastAPI, HTTPException, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 
 # Import database functions
-from app.database.connection import (
-    connect_db, 
-    disconnect_db, 
-    check_database_connection
-)
+from app.database.connection import connect_db, disconnect_db, check_database_connection
 
 # Import models (this ensures they are registered with SQLAlchemy)
-from app.models import Property, Address, Visit, Proposal, Favorite
 
 # Import controllers/routers
 from app.controllers.property_controller import router as property_router
@@ -37,7 +32,7 @@ from app.config.api_docs import (
     API_SERVERS,
     API_TAGS_METADATA,
     API_CONTACT,
-    API_LICENSE_INFO
+    API_LICENSE_INFO,
 )
 
 # Import settings
@@ -46,38 +41,39 @@ from app.settings import settings
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler(sys.stdout)
-    ]
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)],
 )
 
 logger = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan manager for startup and shutdown events."""
     # Startup
     logger.info("Starting FastAPI application...")
-    
+
     try:
         # Connect to database
         await connect_db()
-        
+
         # Verify database connection
         if not await check_database_connection():
-            logger.error("Database connection failed. Please run migration script first.")
+            logger.error(
+                "Database connection failed. Please run migration script first."
+            )
             logger.error("Run: python scripts/migrate_database.py")
             sys.exit(1)
-            
+
         logger.info("Application startup completed successfully")
-        
+
     except Exception as e:
         logger.error(f"Startup error: {e}")
         sys.exit(1)
-        
+
     yield  # Application runs here
-    
+
     # Shutdown
     logger.info("Shutting down application...")
     try:
@@ -85,6 +81,7 @@ async def lifespan(app: FastAPI):
         logger.info("Application shutdown completed")
     except Exception as e:
         logger.error(f"Shutdown error: {e}")
+
 
 # Create FastAPI application with professional documentation
 # Adjust paths based on API_BASE_PATH
@@ -100,7 +97,7 @@ app = FastAPI(
     lifespan=lifespan,
     docs_url=f"{base_path}/docs",
     redoc_url=f"{base_path}/redoc",
-    openapi_url=f"{base_path}/openapi.json"
+    openapi_url=f"{base_path}/openapi.json",
 )
 
 # CORS middleware (read from settings / .env)
@@ -114,17 +111,24 @@ app.add_middleware(
         "https://sexto-andar-api-3ef30ad16a1f.herokuapp.com/",
         "https://sexto-andar-auth-6def0cff0560.herokuapp.com/",
         "https://sexto-andar-dev-proxy-d6d02970f88a.herokuapp.com/",
-        "https://sexto-andar-web-9a6357fcb391.herokuapp.com/"
+        "https://sexto-andar-web-9a6357fcb391.herokuapp.com/",
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization", "Accept", "Origin", "X-Requested-With"],
+    allow_headers=[
+        "Content-Type",
+        "Authorization",
+        "Accept",
+        "Origin",
+        "X-Requested-With",
+    ],
 )
 
 # Create API Router with base path
 # FastAPI doesn't allow "/" as prefix, use empty string instead
 api_prefix = settings.API_BASE_PATH if settings.API_BASE_PATH != "/" else ""
 api_router = APIRouter(prefix=api_prefix)
+
 
 # Health check endpoints under api_router
 @api_router.get("/health", tags=["health"], summary="Root Health Check")
@@ -137,8 +141,9 @@ async def health_root():
         "version": API_VERSION,
         "api": API_TITLE,
         "documentation": f"{base_path}/docs",
-        "redoc": f"{base_path}/redoc"
+        "redoc": f"{base_path}/redoc",
     }
+
 
 @api_router.get("/health/detailed", tags=["health"], summary="Detailed Health Check")
 async def health_check():
@@ -146,7 +151,7 @@ async def health_check():
     try:
         # Check database connection
         db_healthy = await check_database_connection()
-        
+
         return {
             "status": "healthy" if db_healthy else "unhealthy",
             "database": "connected" if db_healthy else "disconnected",
@@ -154,13 +159,14 @@ async def health_check():
             "checks": {
                 "database": "connected" if db_healthy else "disconnected",
                 "api": "running",
-                "authentication": "delegated"
-            }
+                "authentication": "delegated",
+            },
         }
-        
+
     except Exception as e:
         logger.error(f"Health check error: {e}")
         raise HTTPException(status_code=503, detail="Service unavailable")
+
 
 # Include all API routes under the api_router
 api_router.include_router(property_router, prefix="/properties")
@@ -175,6 +181,7 @@ api_router.include_router(auth_router)
 # Include the main API router in the app
 app.include_router(api_router)
 
+
 # Root endpoint - Returns API information
 @app.get("/", tags=["root"], summary="API Root", include_in_schema=False)
 async def root():
@@ -185,18 +192,14 @@ async def root():
         "version": API_VERSION,
         "docs": f"{base_path}/docs",
         "redoc": f"{base_path}/redoc",
-        "health": f"{base_path}/health"
+        "health": f"{base_path}/health",
     }
 
 
 if __name__ == "__main__":
     import uvicorn
-    
+
     logger.info("Starting development server...")
     uvicorn.run(
-        "app.main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True,
-        log_level="info"
+        "app.main:app", host="0.0.0.0", port=8000, reload=True, log_level="info"
     )
