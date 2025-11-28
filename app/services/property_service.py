@@ -11,6 +11,9 @@ from app.models.address import Address
 from app.models.property_image import PropertyImage
 from app.repositories.property_repository import PropertyRepository
 from app.repositories.property_image_repository import PropertyImageRepository
+from app.repositories.visit_repository import VisitRepository
+from app.repositories.proposal_repository import ProposalRepository
+from app.repositories.favorite_repository import FavoriteRepository
 from app.dtos.property_dto import (
     CreateHouseRequest,
     CreateApartmentRequest,
@@ -30,6 +33,9 @@ class PropertyService:
         self.db = db
         self.property_repo = PropertyRepository(db)
         self.image_repo = PropertyImageRepository(db)
+        self.visit_repo = VisitRepository(db)
+        self.proposal_repo = ProposalRepository(db)
+        self.favorite_repo = FavoriteRepository(db)
     
     def create_house(self, house_data: CreateHouseRequest, owner_id: str) -> Property:
         """
@@ -392,6 +398,47 @@ class PropertyService:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Error deleting owner's properties: {str(e)}"
+            )
+
+    def delete_property_and_related_data(self, property_id: str) -> None:
+        """
+        Permanently deletes a single property and all its related data (cascading delete).
+        This is a hard delete operation.
+        """
+        logger.info(f"Initiating permanent deletion for property_id: {property_id}")
+        
+        # Ensure property exists before proceeding
+        self.get_property_by_id(property_id)
+        
+        try:
+            # Order of deletion is important to respect foreign key constraints
+            
+            # 1. Delete related entities
+            fav_count = self.favorite_repo.delete_by_property_id(property_id)
+            logger.info(f"Deleted {fav_count} favorites for property {property_id}.")
+
+            visit_count = self.visit_repo.delete_by_property_id(property_id)
+            logger.info(f"Deleted {visit_count} visits for property {property_id}.")
+
+            proposal_count = self.proposal_repo.delete_by_property_id(property_id)
+            logger.info(f"Deleted {proposal_count} proposals for property {property_id}.")
+            
+            # 2. Delete property images
+            img_count = self.image_repo.delete_images_by_property_ids([property_id])
+            logger.info(f"Deleted {img_count} images for property {property_id}.")
+
+            # 3. Delete the property itself
+            self.property_repo.delete_permanently(property_id)
+            
+            logger.info(f"Successfully and permanently deleted property {property_id}.")
+
+        except Exception as e:
+            logger.error(f"Error during permanent deletion of property {property_id}: {e}")
+            # Rollback transaction in case of failure
+            self.db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"An error occurred during permanent deletion: {str(e)}"
             )
 
     def get_portfolio_stats(self, owner_id: str) -> dict:

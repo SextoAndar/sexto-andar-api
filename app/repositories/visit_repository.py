@@ -138,9 +138,15 @@ class VisitRepository:
         return visit
     
     def delete(self, visit: Visit) -> None:
-        """Delete visit (hard delete)"""
+        """Delete a visit by object"""
         self.db.delete(visit)
         self.db.commit()
+
+    def delete_by_property_id(self, property_id: str) -> int:
+        """Delete all visits for a given property ID and return the count."""
+        num_deleted = self.db.query(Visit).filter(Visit.idProperty == property_id).delete(synchronize_session=False)
+        self.db.commit()
+        return num_deleted
     
     def get_property_owner_id(self, property_id: UUID) -> Optional[UUID]:
         """Get the owner ID of a property"""

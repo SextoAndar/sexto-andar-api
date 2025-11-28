@@ -130,6 +130,11 @@ class PropertyRepository:
         """Delete property (hard delete)"""
         self.db.delete(property_obj)
         self.db.commit()
+
+    def delete_permanently(self, property_id: str) -> None:
+        """Permanently delete a property by its ID."""
+        self.db.query(Property).filter(Property.id == property_id).delete(synchronize_session=False)
+        self.db.commit()
     
     def delete_properties_by_owner_id(self, owner_id: str) -> List[str]:
         """

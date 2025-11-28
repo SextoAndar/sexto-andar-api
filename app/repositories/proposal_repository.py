@@ -149,6 +149,12 @@ class ProposalRepository:
         self.db.delete(proposal)
         self.db.commit()
     
+    def delete_by_property_id(self, property_id: str) -> int:
+        """Delete all proposals for a given property ID and return the count."""
+        num_deleted = self.db.query(Proposal).filter(Proposal.idProperty == property_id).delete(synchronize_session=False)
+        self.db.commit()
+        return num_deleted
+    
     def delete_all_proposals_by_user_id(self, user_id: UUID) -> int:
         """Delete all proposal records permanently for a given user ID. Returns count of deleted proposals."""
         count = (
