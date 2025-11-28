@@ -42,7 +42,7 @@ class PropertyRepository:
         # Apply filters
         if active_only:
             query = query.filter(Property.is_active)
-        
+
         if property_type:
             try:
                 prop_type_enum = PropertyTypeEnum(property_type.upper())
